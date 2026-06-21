@@ -1,6 +1,6 @@
 // Sol de Huacariz — Service Worker v3.2
 // Incrementar VERSION para forzar actualización en todos los dispositivos
-var VERSION = 'sdh-v3.8';
+var VERSION = 'sdh-v3.9';
 
 self.addEventListener('install', function(e) {
   // Activa inmediatamente sin esperar
