@@ -777,7 +777,7 @@ function renderDash(){
   }else{hbEl.innerHTML='';}
 
   // ── ANÁLISIS ACORDEÓN — ORDENADO POR PRIORIDAD ──
-  var rubros=buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr);
+  var rubros=buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr,upcoming);
   // Sort: crit first, then warn, then info, then good
   var priority={'crit':0,'warn':1,'info':2,'good':3};
   rubros.sort(function(a,b){return (priority[a.estado]||2)-(priority[b.estado]||2);});
@@ -892,7 +892,7 @@ function renderDishBars(){
 }
 
 // ══ BUILDER DE RUBROS (devuelve array) ══
-function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr){
+function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr,upcoming){
   var now=new Date();
   var MESESC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   var personalFijoMes=PERSONAL.filter(function(p){return p.activo&&p.tipo==='fijo-mensual';}).reduce(function(s,p){return s+nv(p.monto);},0);
@@ -1064,6 +1064,111 @@ function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInM
       nx.dias<=7?'URGENTE: Activa promoción en redes HOY. Confirma stock y personal.':nx.dias<=21?'Tienes '+nx.dias+' días. Publica en redes esta semana y ajusta el stock para mayor demanda.':'Planificación con '+Math.round(nx.dias/7)+' semanas de anticipación: promoción, stock y personal.');
   }
 
+
+  // ── 12. FOOD COST ──
+  var fcList=[];
+  PLATOS.filter(function(p){return p.on;}).forEach(function(p){
+    var fc=calcFoodCostPct(p.nm);
+    if(fc!==null)fcList.push({nm:p.nm,costo:fc.costo,precio:fc.precio,pct:fc.pct});
+  });
+  if(fcList.length>0){
+    fcList.sort(function(a,b){return b.pct-a.pct;});
+    var highFC=fcList.filter(function(x){return x.pct>35;});
+    var avgFC=fcList.reduce(function(s,x){return s+x.pct;},0)/fcList.length;
+    if(highFC.length>0){
+      add('🧾','Food cost — margen bajo','crit',
+        highFC.length+' plato'+(highFC.length!==1?'s':'')+' sobre el 35%',
+        highFC.slice(0,3).map(function(x){
+          return'"'+esc(x.nm)+'": costo S/'+x.costo.toFixed(2)+' / venta S/'+x.precio+' = '+Math.round(x.pct)+'%';
+        }).join(' | ')+(highFC.length>3?' y más':''),
+        'El costo de materia prima supera el 35% del precio de venta. Opciones: (1) subir el precio de venta, (2) reducir la porción, (3) negociar mejor precio con proveedores.');
+    }else{
+      add('🧾','Food cost','good',
+        'Todos los platos bajo el 35% (promedio '+Math.round(avgFC)+'%)',
+        fcList.slice(0,3).map(function(x){return'"'+esc(x.nm)+'": '+Math.round(x.pct)+'%';}).join(' · ')+(fcList.length>3?' y más':''),
+        'Continúa actualizando los precios de insumos en Catálogo → Stock después de cada compra para mantener el análisis preciso.');
+    }
+  }else if(RECETAS.length>0){
+    add('🧾','Food cost','info','Sin precios de insumos definidos',
+      'Hay recetas definidas pero los insumos no tienen precio unitario — no es posible calcular el food cost.',
+      'Ingresa el precio por unidad de cada insumo en Catálogo → Stock. Con eso el sistema calculará automáticamente el margen de cada plato.');
+  }
+
+  // ── 13. LISTA DE COMPRAS ──
+  var nextEst=getNextEventEstimate(upcoming,rm);
+  if(nextEst){
+    var shopL=getShoppingList(nextEst.tipo,nextEst.personas);
+    if(shopL&&shopL.items.length>0){
+      var toBuyL=shopL.items.filter(function(x){return x.buy>0;});
+      if(toBuyL.length>0){
+        add('🛒','Lista de compras — próximo evento','warn',
+          toBuyL.length+' insumo'+(toBuyL.length!==1?'s':'')+' a comprar'+(shopL.totalCosto>0?' (~'+S(Math.round(shopL.totalCosto))+')':''),
+          toBuyL.slice(0,4).map(function(x){
+            return esc(x.nm)+': '+x.buy.toFixed(1)+' '+esc(x.u)+(x.costo>0?' (~S/'+Math.round(x.costo)+')':'');
+          }).join(' | ')+(toBuyL.length>4?' (+'+( toBuyL.length-4)+' más)':''),
+          'Para '+nextEst.personas+' personas estimadas. Actualiza el stock en Catálogo → Stock después de cada compra para mantener la lista precisa.');
+      }else{
+        add('🛒','Lista de compras — próximo evento','good',
+          'Stock suficiente para '+nextEst.personas+' personas',
+          'Todos los insumos con receta tienen stock disponible para el próximo evento.',
+          'Verifica el stock 2-3 días antes del evento por si hubo consumo adicional.');
+      }
+    }else if(RECETAS.length===0){
+      add('🛒','Lista de compras','info','Recetas no definidas aún',
+        'Para generar la lista de compras automática necesitas definir las recetas de los platos en Catálogo → Recetas.',
+        'Con las recetas completas el sistema calculará exactamente qué comprar antes de cada evento.');
+    }
+  }
+
+  // ── 14. CONTROL DE MERMAS ──
+  if(rm.length>0){
+    var totalMerma=rm.reduce(function(s,r){return s+nv(r.gas&&r.gas.mer);},0);
+    var totalGastos=rm.reduce(function(s,r){return s+calcReg(r).gas;},0);
+    if(totalMerma>0&&tot.ingT>0){
+      var mermaPct=totalMerma/tot.ingT*100;
+      if(mermaPct>6){
+        add('📉','Control de mermas','crit',
+          Math.round(mermaPct)+'% de ingresos en mermas (S/'+Math.round(totalMerma)+')',
+          'Las mermas registradas (S/'+Math.round(totalMerma)+') representan el '+Math.round(mermaPct)+'% de los ingresos del mes. Por encima del 6% indica sobrecompra, mal almacenamiento o pérdidas en preparación.',
+          'Ajusta las compras a la proyección de demanda. La lista de compras automática del sistema calcula las cantidades exactas para evitar sobrecompra.');
+      }else if(mermaPct>3){
+        add('📉','Control de mermas','warn',
+          Math.round(mermaPct)+'% de ingresos en mermas (S/'+Math.round(totalMerma)+')',
+          'Mermas en zona de atención ('+Math.round(mermaPct)+'%). Rango aceptable: menos del 3% de ingresos.',
+          'Revisa qué insumos generan más merma y ajusta las cantidades de compra para el próximo evento.');
+      }else{
+        add('📉','Control de mermas','good',
+          Math.round(mermaPct)+'% de ingresos en mermas (controlado)',
+          'Las mermas (S/'+Math.round(totalMerma)+') están dentro del rango aceptable (menos del 3% de ingresos).',
+          'Continúa ajustando las compras a la proyección de demanda para mantener este nivel.');
+      }
+    }
+  }
+
+  // ── 15. COSTO MATERIA PRIMA DEL MES ──
+  var totalCostoMP=0,platosConPrecio=0;
+  rm.forEach(function(r){
+    (r.ventas||[]).forEach(function(v){
+      var fc=calcFoodCostPct(v.nm);
+      if(fc!==null){totalCostoMP+=fc.costo*nv(v.qty);platosConPrecio++;}
+    });
+  });
+  if(platosConPrecio>0&&tot.ingC>0){
+    var costoPct=totalCostoMP/tot.ingC*100;
+    var costoEstado=costoPct>40?'crit':costoPct>35?'warn':'good';
+    add('💸','Costo de materia prima del mes',costoEstado,
+      Math.round(costoPct)+'% de ingresos comida (~'+S(Math.round(totalCostoMP))+')',
+      'Costo estimado de ingredientes para los platos vendidos: S/'+Math.round(totalCostoMP)+' ('+Math.round(costoPct)+'% de ingresos de comida). Benchmark ideal: 28-35%.',
+      costoPct>35
+        ?'Costo de materia prima por encima del límite. Revisa los platos con food cost alto y ajusta precios o porciones.'
+        :'Costo controlado. Mantén los precios de insumos actualizados en Catálogo → Stock para conservar el análisis preciso.');
+  }else if(RECETAS.length>0&&rm.length>0){
+    add('💸','Costo materia prima','info','Precios de insumos incompletos',
+      'Hay recetas definidas pero faltan precios en algunos insumos del inventario.',
+      'Ingresa el precio unitario de cada insumo en Catálogo → Stock para calcular el costo de materia prima del mes.');
+  }
+
+
   // Sin datos
   if(!rm.length&&!fij&&rubros.length===0){
     add('💡','Sin datos del mes','info','0 eventos registrados','Cuando el administrador registre los eventos, verás aquí el análisis completo de los 11 rubros: rentabilidad, tendencia, proyección, bar, personal, cortesías, vales, platos, eficiencia, stock y calendario.','');
@@ -1077,6 +1182,121 @@ function renderInsights(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,days
   // Kept for compatibility
 }
 
+
+// ══ MÓDULO: FOOD COST + LISTA DE COMPRAS + MERMAS ══
+
+function calcFoodCost(platoNm){
+  var rec=getReceta(platoNm);
+  if(!rec||!rec.ing||!rec.ing.length)return null;
+  var total=0,complete=true;
+  rec.ing.forEach(function(ing){
+    var s=STOCK.find(function(x){return x.id===ing.sid;});
+    if(!s||nv(s.pr)===0){complete=false;return;}
+    total+=nv(ing.qty)*nv(s.pr);
+  });
+  return complete?total:null;
+}
+
+function calcFoodCostPct(platoNm){
+  var p=PLATOS.find(function(x){return x.nm===platoNm&&x.on;});
+  if(!p||!nv(p.pr))return null;
+  var costo=calcFoodCost(platoNm);
+  if(costo===null)return null;
+  return{costo:costo,precio:nv(p.pr),pct:costo/nv(p.pr)*100};
+}
+
+function getShoppingList(tipo,personas){
+  var proj=getProjection(tipo,nv(personas));
+  if(!proj||!proj.dishes.length)return null;
+  var needed={};
+  proj.dishes.forEach(function(pd){
+    var rec=getReceta(pd.nm);if(!rec)return;
+    rec.ing.forEach(function(ing){
+      if(!needed[ing.sid]){
+        var s=STOCK.find(function(x){return x.id===ing.sid;});
+        needed[ing.sid]={nm:ing.nm,u:ing.u,needed:0,available:s?nv(s.qty):0,pr:s?nv(s.pr):0};
+      }
+      needed[ing.sid].needed+=nv(ing.qty)*pd.qty;
+    });
+  });
+  var items=Object.keys(needed).map(function(sid){
+    var n=needed[sid];
+    var buy=Math.max(0,n.needed-n.available);
+    return{sid:sid,nm:n.nm,u:n.u,
+      needed:parseFloat(n.needed.toFixed(2)),
+      available:parseFloat(n.available.toFixed(2)),
+      buy:parseFloat(buy.toFixed(2)),
+      costo:buy*n.pr,
+      status:buy<=0?'ok':n.available>0?'partial':'zero'};
+  }).filter(function(x){return x.needed>0;})
+    .sort(function(a,b){
+      var p2={zero:0,partial:1,ok:2};
+      return(p2[a.status]||2)-(p2[b.status]||2);
+    });
+  return{items:items,
+    totalCosto:items.reduce(function(s,x){return s+x.costo;},0),
+    basedOn:proj.basedOn,avgPeople:proj.avgPeople,personas:nv(personas)};
+}
+
+function getNextEventEstimate(upcoming,rm){
+  // Returns {tipo, personas} for the most likely next event
+  if(upcoming.length>0&&upcoming[0].dias<=14){
+    var u=upcoming[0];
+    return{tipo:u.demanda>=2?'especial':'domingo',
+      personas:u.demanda>=3?180:u.demanda>=2?100:60,
+      nombre:u.nm};
+  }
+  if(rm.length>0){
+    var last=REG.slice().sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');})[0];
+    return{tipo:last.tipo||'domingo',
+      personas:nv(last.personas)||60,
+      nombre:'Próximo evento'};
+  }
+  return null;
+}
+
+function renderShoppingCard(upcoming,rm){
+  var el=q('d-shopping');if(!el)return;
+  var next=getNextEventEstimate(upcoming,rm);
+  if(!next){el.innerHTML='';return;}
+  var shop=getShoppingList(next.tipo,next.personas);
+  if(!shop||!shop.items.length){el.innerHTML='';return;}
+  var toBuy=shop.items.filter(function(x){return x.buy>0;});
+  var okItems=shop.items.filter(function(x){return x.status==='ok';});
+
+  var html='<div class="card" style="margin-bottom:10px;">'+
+    '<div class="ch"><div class="ch-t">🛒 Lista de compras — '+esc(next.nombre)+'</div>'+
+    '<div class="ch-s">'+(shop.basedOn>0?'Basado en '+shop.basedOn+' evento'+(shop.basedOn!==1?'s':'')+' similares · ':'Estimado para ')+next.personas+' personas</div>'+
+    '</div><div class="cb" style="padding-top:10px;">';
+
+  if(toBuy.length>0){
+    html+='<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--er);margin-bottom:8px;">⚠️ A comprar ('+toBuy.length+' insumos)</div>';
+    toBuy.forEach(function(item){
+      var dot=item.status==='zero'?'🔴':'🟡';
+      html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:.5px solid var(--bdr);">'+
+        '<div style="flex:1;"><div style="font-size:13px;font-weight:500;">'+dot+' '+esc(item.nm)+'</div>'+
+        '<div style="font-size:11px;color:var(--inks);">Necesitas '+item.needed.toFixed(1)+' '+esc(item.u)+' · Tienes '+item.available.toFixed(1)+'</div></div>'+
+        '<div style="text-align:right;flex-shrink:0;margin-left:10px;">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--er);">'+item.buy.toFixed(1)+' '+esc(item.u)+'</div>'+
+        (item.costo>0?'<div style="font-size:11px;color:var(--inks);">~'+S(item.costo)+'</div>':'')+
+        '</div></div>';
+    });
+    if(shop.totalCosto>0){
+      html+='<div class="dr" style="font-weight:700;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--bdr);">'+
+        '<span class="dl">Costo estimado total de compras</span>'+
+        '<span class="dv ok">~'+S(Math.round(shop.totalCosto))+'</span></div>';
+    }
+  }
+  if(okItems.length>0){
+    html+='<div style="margin-top:8px;padding:7px 10px;background:var(--okb);border-radius:8px;font-size:12px;color:var(--ok);">'+
+      '✅ Stock suficiente: '+okItems.map(function(x){return esc(x.nm);}).join(', ')+'</div>';
+  }
+  if(toBuy.length===0){
+    html+='<div style="text-align:center;padding:10px;color:var(--ok);font-weight:600;font-size:14px;">✅ Stock suficiente para el próximo evento</div>';
+  }
+  html+='</div></div>';
+  el.innerHTML=html;
+}
 
 // ══ HISTORIAL ══
 function renderHist(){
