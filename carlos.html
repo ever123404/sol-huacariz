@@ -513,10 +513,10 @@ function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'bloc
     '.tgg{display:flex;background:var(--bg);border-radius:20px;padding:2px;gap:2px;}',
     '.tg{font-size:11px;font-weight:600;padding:5px 11px;border-radius:18px;border:none;cursor:pointer;color:var(--inks);background:transparent;transition:all .2s;}',
     '.tg.on{background:var(--c1);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);}',
-    '.vb-wrap{padding:8px 14px 12px;}',
-    '.vb-area{display:flex;align-items:flex-end;gap:5px;height:110px;padding-bottom:4px;}',
+    '.vb-wrap{padding:4px 14px 12px;}',
+    '.vb-area{display:flex;align-items:flex-end;gap:5px;height:100px;padding-bottom:4px;margin-top:10px;}',
     '.vb-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}',
-    '.vb-bar{width:100%;border-radius:5px 5px 0 0;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:4px;}',
+    '.vb-bar{width:100%;border-radius:5px 5px 0 0;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:4px;background:#2F6824;}',
     '.vb-val{font-size:8.5px;font-weight:700;color:var(--inkm);margin-bottom:2px;font-variant-numeric:tabular-nums;text-align:center;}',
     '.vb-lbl{font-size:8px;color:var(--inks);margin-top:4px;text-align:center;line-height:1.3;}',
     '.vb-legend{display:flex;gap:12px;padding:6px 0 2px;flex-wrap:wrap;}',
@@ -527,7 +527,7 @@ function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'bloc
     '.hb-rk{font-size:14px;width:26px;flex-shrink:0;text-align:center;}',
     '.hb-lbl{font-size:11.5px;color:var(--inkm);width:32%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 7px;flex-shrink:0;}',
     '.hb-track{flex:1;background:var(--gl);border-radius:6px;height:24px;overflow:hidden;}',
-    '.hb-bar{height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.4,0,.2,1);}',
+    '.hb-bar{height:100%;border-radius:6px;width:0;transition:width .6s cubic-bezier(.4,0,.2,1);background:#2F6824;}',
     '.hb-val{font-size:11.5px;font-weight:700;color:var(--inkm);margin-left:8px;white-space:nowrap;flex-shrink:0;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;}',
     '.acc{background:#fff;border-radius:14px;box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}',
     '.acc-h{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;cursor:pointer;user-select:none;}',
@@ -550,7 +550,7 @@ function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'bloc
     '.rub.warn .rub-nm{color:#92400E;}.rub.warn .rub-vl{background:#FEF3C7;color:#92400E;}',
     '.rub.good .rub-nm{color:#166534;}.rub.good .rub-vl{background:#DCFCE7;color:#166534;}',
     '.rub.info .rub-nm{color:#1E40AF;}.rub.info .rub-vl{background:#DBEAFE;color:#1E40AF;}',
-    '.rub-dg{font-size:11.5px;color:var(--inkm);line-height:1.5;}',
+    '.rub-dg{font-size:11.5px;color:var(--inkm);line-height:1.5;overflow-wrap:break-word;word-break:break-word;max-width:100%;}',
     '.rub-rc{font-size:11px;font-weight:600;margin-top:5px;padding:3px 9px;border-radius:6px;display:inline-block;}',
     '.rub.crit .rub-rc{background:#FEE2E2;color:#B91C1C;}',
     '.rub.warn .rub-rc{background:#FEF3C7;color:#92400E;}',
@@ -1007,7 +1007,7 @@ function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInM
     var nx=upd[0];
     var cs=nx.dias<=7?'crit':nx.dias<=21?'warn':'info';
     var demL=['','moderada','alta','máxima'][nx.demanda]||'especial';
-    var otrosStr=upd.length>1?' | Próximas: '+upd.slice(1,3).map(function(d){return d.nm+' ('+d.dias+'d)';}).join(', '):'';
+    var otrosStr=upd.length>1?' · También: '+upd[1].nm+' ('+upd[1].dias+' días)':'';
     add('📅','Próxima fecha especial',cs,nx.nm+' en '+nx.dias+' días (demanda '+demL+')',nx.desc+otrosStr,
       nx.dias<=7?'URGENTE: Activa promoción en redes HOY. Confirma stock y personal.':nx.dias<=21?'Tienes '+nx.dias+' días. Publica en redes esta semana y ajusta el stock para mayor demanda.':'Planificación con '+Math.round(nx.dias/7)+' semanas de anticipación: promoción, stock y personal.');
   }
