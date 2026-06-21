@@ -989,22 +989,22 @@ function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInM
 
   // 1. RENTABILIDAD
   if(rm.length>0||fij>0){
-    if(real<0){
+    if(fij>0&&real<0){
       add('🏦','Rentabilidad','crit','Pérdida: '+S(Math.abs(real)),
         'Gastos fijos ('+S(fij)+') superan el resultado operativo ('+S(tot.res)+'). Pérdida neta: '+S(Math.abs(real))+'.',
         'El próximo evento debe generar al menos '+S(Math.abs(real))+' extra. Prioriza mayor asistencia e impulsa el bar.');
-    }else if(fij>0&&real<fij*0.15){
+    }else if(fij>0&&real>=0&&real<fij*0.15){
       add('🏦','Rentabilidad','warn','Utilidad ajustada: '+S(real),
-        'Rentable pero con margen estrecho ('+Math.round(real/fij*100)+'% sobre fijos). Faltan '+daysLeft+' días.',
+        'Rentable pero con margen estrecho ('+Math.round(real/fij*100)+'% sobre fijos). Faltan '+daysLeft+' días para cerrar el mes.',
         'Un evento adicional añadiría ~'+S(Math.round(tot.res/Math.max(rm.length,1)))+' al resultado. Activa promoción esta semana.');
-    }else if(real>=0){
+    }else if(fij>0&&real>=fij*0.15){
       add('🏦','Rentabilidad','good','Utilidad real: '+S(real),
         'Resultado operativo ('+S(tot.res)+') cubre los fijos ('+S(fij)+') con '+S(real)+' de ganancia neta.',
-        'Considera destinar parte a reposición de stock o mejoras del local.');
-    }else{
-      add('🏦','Rentabilidad','info','Operativo: '+S(tot.res),
-        'Sin gastos fijos registrados para '+MESESC[now.getMonth()]+'. Resultado operativo: '+S(tot.res)+'.',
-        'Registra planilla, alquiler y servicios en la sección MES para ver la utilidad real.');
+        'Mantén el ritmo. Considera destinar parte a reposición de stock o mejoras del local.');
+    }else if(fij===0&&rm.length>0){
+      add('🏦','Rentabilidad','info','Resultado operativo: '+S(tot.res),
+        'No hay gastos fijos registrados para '+MESESC[now.getMonth()]+' '+now.getFullYear()+'. El resultado operativo es '+S(tot.res)+' pero no refleja la utilidad real.',
+        'Registra planilla, alquiler y servicios en la sección MES para calcular la utilidad real del mes.');
     }
   }
 
@@ -1041,11 +1041,23 @@ function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInM
   }
 
   // 5. PERSONAL
-  if(personalFijoMes>0&&rm.length>0&&tot.ingT>0){
-    var pp=personalFijoMes/tot.ingT*100;
-    if(pp>30)add('👥','Costo personal fijo','crit',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes) consume el '+Math.round(pp)+'% de ingresos. Insostenible si supera el 30%.','Evalúa convertir algún rol a pago por evento. Para llegar al 20% necesitas ingresos mínimos de '+S(Math.round(personalFijoMes/0.20))+'.');
-    else if(pp>20)add('👥','Costo personal fijo','warn',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes): '+Math.round(pp)+'% de ingresos. En meses de baja actividad puede ser crítico.','Necesitas al menos '+Math.ceil(personalFijoMes/(tot.ingT/rm.length*0.20))+' eventos/mes para mantener el ratio bajo el 20%.');
-    else add('👥','Costo personal fijo','good',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes) en nivel saludable (menos del 20% de ingresos).','Mantén el volumen de eventos actual para conservar este equilibrio.');
+  if(personalFijoMes>0){
+    if(rm.length===0){
+      add('👥','Costo personal fijo','crit',S(personalFijoMes)+'/mes sin ingresos',
+        'Hay personal con sueldo fijo ('+S(personalFijoMes)+'/mes) pero no se han registrado eventos este mes. El negocio gasta sin generar ingresos.',
+        'Registra los eventos del mes o evalúa si algún rol puede pausarse en meses sin actividad.');
+    }else if(tot.ingT>0){
+      var pp=personalFijoMes/tot.ingT*100;
+      if(pp>30)add('👥','Costo personal fijo','crit',Math.round(pp)+'% de ingresos',
+        'Personal fijo ('+S(personalFijoMes)+'/mes) consume el '+Math.round(pp)+'% de ingresos. Insostenible por encima del 30%.',
+        'Evalúa convertir algún rol a pago por evento. Para llegar al 20% necesitas ingresos mínimos de '+S(Math.round(personalFijoMes/0.20))+'.');
+      else if(pp>20)add('👥','Costo personal fijo','warn',Math.round(pp)+'% de ingresos',
+        'Personal fijo ('+S(personalFijoMes)+'/mes): '+Math.round(pp)+'% de ingresos. En meses de baja actividad puede ser crítico.',
+        'Necesitas al menos '+Math.ceil(personalFijoMes/(tot.ingT/rm.length*0.20))+' eventos/mes para mantener el ratio bajo el 20%.');
+      else add('👥','Costo personal fijo','good',Math.round(pp)+'% de ingresos',
+        'Personal fijo ('+S(personalFijoMes)+'/mes) en nivel saludable (menos del 20% de ingresos).',
+        'Mantén el volumen de eventos actual para conservar este equilibrio.');
+    }
   }
 
   // 6. CORTESÍAS
@@ -1109,11 +1121,25 @@ function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInM
   }
 
   // 10. STOCK
-  var sCrit=STOCK.filter(function(s){return RECETAS.some(function(r){return r.ing&&r.ing.some(function(i){return i.sid===s.id;});})&&nv(s.qty)===0;});
-  var sBaj=STOCK.filter(function(s){return nv(s.qty)>0&&nv(s.qty)<=nv(s.min);});
-  if(sCrit.length>0)add('📦','Stock — riesgo operativo','crit',sCrit.length+' insumo'+(sCrit.length!==1?'s':'')+' agotados con receta','Agotados con receta activa: '+sCrit.slice(0,3).map(function(s){return s.nm;}).join(', ')+(sCrit.length>3?' y más':'')+'.',  'Compra urgente antes del próximo evento. Sin estos insumos no puedes preparar esos platos.');
-  else if(sBaj.length>0)add('📦','Stock','warn',sBaj.length+' bajo mínimo',sBaj.slice(0,4).map(function(s){return s.nm+': '+nv(s.qty).toFixed(1)+'/'+nv(s.min)+' '+s.u;}).join(' | ')+(sBaj.length>4?' +más':'')+'.',  'Planifica la compra antes del próximo evento.');
-  else if(STOCK.length>0)add('📦','Stock','good','Todo sobre el mínimo','Todos los productos están por encima del nivel mínimo de alerta.','Continúa revisando el stock 2-3 días antes de cada evento como rutina.');
+  var hasReceta=function(s){return RECETAS.some(function(r){return r.ing&&r.ing.some(function(i){return i.sid===s.id;});});};
+  var sCrit=STOCK.filter(function(s){return nv(s.qty)<=nv(s.min)&&hasReceta(s);});
+  var sBaj=STOCK.filter(function(s){return nv(s.qty)<=nv(s.min)&&!hasReceta(s);});
+  var totalAlerts=sCrit.length+sBaj.length;
+  if(sCrit.length>0){
+    add('📦','Stock — riesgo operativo','crit',
+      sCrit.length+' insumo'+(sCrit.length!==1?'s':'')+' bajo mínimo con receta activa',
+      'Insumos con receta que están en o bajo el mínimo: '+sCrit.slice(0,3).map(function(s){return esc(s.nm)+' ('+nv(s.qty).toFixed(1)+' '+esc(s.u)+')';}).join(', ')+(sCrit.length>3?' y '+(sCrit.length-3)+' más':'')+'.',
+      'Compra urgente antes del próximo evento. Sin estos insumos no puedes preparar esos platos.');
+  }
+  if(sBaj.length>0){
+    add('📦','Stock — reabastecimiento',sBaj.length>5?'warn':'info',
+      sBaj.length+' producto'+(sBaj.length!==1?'s':'')+' bajo el mínimo',
+      sBaj.slice(0,4).map(function(s){return esc(s.nm)+': '+nv(s.qty).toFixed(1)+'/'+nv(s.min)+' '+esc(s.u);}).join(' | ')+(sBaj.length>4?' (+'+( sBaj.length-4)+' más)':'')+'.',
+      'Planifica la compra antes del próximo evento. Ingresa el stock actual en Catálogo → Stock después de cada compra.');
+  }
+  if(totalAlerts===0&&STOCK.length>0){
+    add('📦','Stock','good','Todo el inventario sobre el mínimo','Todos los productos registrados están por encima de su nivel mínimo de alerta.','Continúa revisando el stock 2-3 días antes de cada evento como rutina.');
+  }
 
   // 11. CALENDARIO
   var upd=getUpcomingDates(45);
