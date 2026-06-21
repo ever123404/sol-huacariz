@@ -203,11 +203,13 @@ hr{border:none;border-top:.5px solid var(--bdr);margin:11px 0;}
   <div class="scroll">
     <div id="pg-dash" class="page active">
       <div id="d-header"></div>
-      <div class="g2" id="d-metrics"><div class="mc s2"><div class="ml">Cargando datos…</div></div></div>
+      <div id="d-metrics"></div>
+      <div id="d-trend"></div>
+      <div id="d-dishes"></div>
       <div id="d-insights"></div>
-      <div id="d-top"></div>
-      <div id="d-cobros"></div>
       <div id="d-last"></div>
+      <div id="d-cobros" style="display:none;"></div>
+      <div id="d-top" style="display:none;"></div>
       <div id="d-stock"></div>
       
     </div>
@@ -464,452 +466,485 @@ function toast(msg,type){
 }
 function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'block':'none';}
 
-// ══ DASHBOARD ══
+// ══ CHART CSS ══
+(function(){
+  if(document.getElementById('sdh-css'))return;
+  var s=document.createElement('style');s.id='sdh-css';
+  s.textContent=[
+    '.sit{border-radius:12px;padding:12px 14px;margin-bottom:12px;}',
+    '.sit.spec{background:linear-gradient(135deg,#5B21B6,#7C3AED);color:#fff;}',
+    '.sit.crit{background:linear-gradient(135deg,#B71C1C,#E53935);color:#fff;}',
+    '.sit.warn{background:linear-gradient(135deg,#C14E00,#E65100);color:#fff;}',
+    '.sit.calm{background:linear-gradient(135deg,#1B3A5C,#2563EB);color:#fff;}',
+    '.sit.good{background:linear-gradient(135deg,#1A6B1E,#2E7D32);color:#fff;}',
+    '.sit-ttl{font-size:16px;font-weight:700;margin-bottom:2px;letter-spacing:-.2px;}',
+    '.sit-sub{font-size:12.5px;opacity:.88;line-height:1.45;}',
+    '.sit-rec{font-size:11.5px;font-weight:600;margin-top:7px;background:rgba(255,255,255,.2);padding:4px 11px;border-radius:20px;display:inline-block;}',
+    '.m3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;}',
+    '.m3c{background:#fff;border-radius:10px;box-shadow:var(--sh);padding:11px 6px 9px;text-align:center;}',
+    '.m3l{font-size:10px;color:var(--inks);font-weight:500;margin-bottom:3px;line-height:1.3;}',
+    '.m3v{font-size:17px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1;}',
+    '.m3s{font-size:9.5px;color:var(--inks);margin-top:2px;}',
+    '.m3c.pos .m3v{color:var(--ok);}.m3c.neg .m3v{color:var(--er);}',
+    '.cht{background:#fff;border-radius:14px;box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}',
+    '.cht-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 6px;}',
+    '.cht-ttl{font-family:"Fraunces",serif;font-size:14.5px;font-weight:600;color:var(--ink);}',
+    '.tgg{display:flex;background:var(--bg);border-radius:20px;padding:2px;gap:2px;}',
+    '.tg{font-size:11px;font-weight:600;padding:4px 10px;border-radius:18px;border:none;cursor:pointer;color:var(--inks);background:transparent;transition:all .15s;}',
+    '.tg.on{background:var(--c1);color:#fff;}',
+    '.hb-w{padding:4px 14px 14px;}',
+    '.hb-r{display:flex;align-items:center;margin-bottom:9px;}',
+    '.hb-l{font-size:11px;color:var(--inkm);width:36%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:7px;flex-shrink:0;}',
+    '.hb-t{flex:1;background:var(--gl);border-radius:4px;height:19px;overflow:hidden;}',
+    '.hb-b{height:100%;background:var(--c1);border-radius:4px;width:0;transition:width .55s cubic-bezier(.4,0,.2,1);}',
+    '.hb-v{font-size:11px;font-weight:700;color:var(--inkm);margin-left:7px;white-space:nowrap;flex-shrink:0;min-width:42px;text-align:right;font-variant-numeric:tabular-nums;}',
+    '.vb-w{padding:8px 14px 10px;}',
+    '.vb-xl{display:flex;align-items:flex-end;gap:4px;height:90px;}',
+    '.vb-c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}',
+    '.vb-b{width:100%;border-radius:4px 4px 0 0;background:var(--c1);transition:height .55s cubic-bezier(.4,0,.2,1);min-height:3px;}',
+    '.vb-lv{font-size:8.5px;font-weight:700;color:var(--ink);margin-bottom:2px;font-variant-numeric:tabular-nums;}',
+    '.vb-ll{font-size:8px;color:var(--inks);margin-top:3px;text-align:center;line-height:1.2;}',
+    '.vb-nl{font-size:11px;color:var(--inks);text-align:center;padding:20px 0;}',
+    '.acc{background:#fff;border-radius:14px;box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}',
+    '.acc-h{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;cursor:pointer;user-select:none;}',
+    '.acc-ht{font-family:"Fraunces",serif;font-size:15px;font-weight:600;color:var(--ink);}',
+    '.acc-meta{font-size:11px;font-weight:600;}',
+    '.acc-arr{color:var(--inks);font-size:13px;transition:transform .2s;flex-shrink:0;margin-left:8px;}',
+    '.acc-arr.op{transform:rotate(180deg);}',
+    '.acc-b{padding:0 14px 13px;}',
+    '.rub{border-radius:9px;padding:10px 12px;margin-bottom:7px;display:flex;gap:10px;}',
+    '.rub:last-child{margin-bottom:0;}',
+    '.rub.crit{background:#FFF0F0;border-left:3px solid var(--er);}',
+    '.rub.warn{background:#FFF8F0;border-left:3px solid #E65100;}',
+    '.rub.good{background:#F0FBF1;border-left:3px solid var(--ok);}',
+    '.rub.info{background:#F0F4FF;border-left:3px solid #3563E9;}',
+    '.rub-ico{font-size:18px;flex-shrink:0;line-height:1.3;}',
+    '.rub-bd{flex:1;min-width:0;}',
+    '.rub-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:2px;}',
+    '.rub-nm{font-size:12.5px;font-weight:700;color:var(--ink);}',
+    '.rub-vl{font-size:10.5px;font-weight:700;white-space:nowrap;flex-shrink:0;}',
+    '.rub.crit .rub-nm,.rub.crit .rub-vl{color:var(--er);}',
+    '.rub.warn .rub-nm,.rub.warn .rub-vl{color:#B45000;}',
+    '.rub.good .rub-nm,.rub.good .rub-vl{color:var(--ok);}',
+    '.rub.info .rub-nm,.rub.info .rub-vl{color:#1A3FAB;}',
+    '.rub-dg{font-size:11.5px;color:var(--inkm);line-height:1.5;}',
+    '.rub-rc{font-size:11px;font-weight:600;margin-top:5px;padding:3px 9px;border-radius:5px;display:inline-block;}',
+    '.rub.crit .rub-rc{background:var(--erb);color:var(--er);}',
+    '.rub.warn .rub-rc{background:var(--wab);color:var(--wa);}',
+    '.rub.good .rub-rc{background:var(--okb);color:var(--ok);}',
+    '.rub.info .rub-rc{background:#E8EEFF;color:#1A3FAB;}',
+    '.coll{background:#fff;border-radius:14px;box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}',
+    '.coll-h{display:flex;justify-content:space-between;align-items:center;padding:12px 13px;cursor:pointer;user-select:none;}',
+    '.coll-t{font-size:14px;font-weight:600;color:var(--ink);}',
+    '.coll-a{color:var(--inks);font-size:12px;transition:transform .2s;}',
+    '.coll-a.op{transform:rotate(180deg);}',
+    '.coll-b{padding:0 13px 13px;}'
+  ].join('');
+  document.head.appendChild(s);
+})();
+
+// CHART DATA STATE
+var _chartMode='val';
+var _chartData={dishes:[],trend:[]};
+
+function countWeekendsLeft(){
+  var now=new Date();
+  var last=new Date(now.getFullYear(),now.getMonth()+1,0);
+  var c=0,d=new Date(now);d.setDate(d.getDate()+1);
+  while(d<=last){if(d.getDay()===0||d.getDay()===6)c++;d.setDate(d.getDate()+1);}
+  return c;
+}
+
+function getSitCard(real,rm,fij,upcoming,daysLeft){
+  var wkLeft=countWeekendsLeft();
+  // Priority 1: upcoming special in ≤7 days
+  if(upcoming.length&&upcoming[0].dias<=7){
+    var u=upcoming[0];
+    return{cls:u.demanda>=3?'spec':'warn',
+      ico:u.demanda>=3?'🔥':'📅',
+      ttl:u.nm+' — en '+u.dias+' día'+(u.dias!==1?'s':''),
+      sub:u.desc,
+      rec:u.dias<=3?'¡Activa la promoción en redes HOY!':'Confirma stock y personal esta semana'};
+  }
+  // Priority 2: month negative
+  if(rm.length>0&&real<0&&fij>0){
+    return{cls:'crit',ico:'🚨',
+      ttl:'Mes en negativo — acción requerida',
+      sub:'Pérdida actual: '+S(Math.abs(real))+'. Faltan '+daysLeft+' días para cerrar '+fmtM(thisM())+'.',
+      rec:'El próximo evento debe generar '+S(Math.abs(real))+' adicionales para cubrir los fijos'};
+  }
+  // Priority 3: upcoming special in ≤21 days
+  if(upcoming.length&&upcoming[0].dias<=21){
+    var u2=upcoming[0];
+    return{cls:'calm',ico:'📅',
+      ttl:u2.nm+' — en '+u2.dias+' días',
+      sub:u2.desc,
+      rec:'Planifica con anticipación: stock, personal y promoción en redes'};
+  }
+  // Priority 4: weekends / default
+  var proyImg=rm.length>0?S(Math.round(real/Math.max(1,new Date().getDate())*new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate())):'—';
+  return{cls:wkLeft<=1?'warn':'good',ico:'📅',
+    ttl:wkLeft+' fin'+(wkLeft!==1?'es':'')+(wkLeft!==1?' de semana':' de semana')+' para cerrar '+fmtM(thisM()),
+    sub:'Faltan '+daysLeft+' días. Proyección de utilidad: '+proyImg+'.',
+    rec:wkLeft<=1?'Es el último fin de semana del mes — maximiza cada venta':'Asegura la operación de cada fin de semana restante'};
+}
+
+// ══ DASHBOARD PRINCIPAL ══
 function renderDash(){
   var mes=thisM();
   var now=new Date();
-  var daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-  var dayOfMonth=now.getDate();
-  var daysLeft=daysInMonth-dayOfMonth;
   var DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   var MESESC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  var dayOfMonth=now.getDate();
+  var daysLeft=daysInMonth-dayOfMonth;
   var fechaHoy=DIAS[now.getDay()]+', '+now.getDate()+' de '+MESES[now.getMonth()]+' de '+now.getFullYear();
+
   var rm=REG.filter(function(r){return(r.fecha||'').slice(0,7)===mes;});
   var lmDate=new Date(now);lmDate.setMonth(lmDate.getMonth()-1);var lmStr=lmDate.toISOString().slice(0,7);
   var rlm=REG.filter(function(r){return(r.fecha||'').slice(0,7)===lmStr;});
   var tot={ingC:0,ingB:0,ingT:0,cort:0,vale:0,gas:0,gasPersonal:0,gasExtras:0,res:0};
   rm.forEach(function(r){var c=calcReg(r);tot.ingC+=c.ingC;tot.ingB+=c.ingB;tot.ingT+=c.ingT;tot.cort+=c.cort;tot.vale+=c.vale;tot.gas+=c.gas;tot.gasPersonal+=c.gasPersonal;tot.gasExtras+=c.gasExtras;tot.res+=c.res;});
-  var totLm={ingT:0,res:0,eventos:rlm.length};
-  rlm.forEach(function(r){var c=calcReg(r);totLm.ingT+=c.ingT;totLm.res+=c.res;});
+  var totLm={ingT:0,res:0};rlm.forEach(function(r){var c=calcReg(r);totLm.ingT+=c.ingT;totLm.res+=c.res;});
   var fij=FIJOS.filter(function(f){return f.mes===mes;}).reduce(function(s,f){return s+ftot(f);},0);
   var real=tot.res-fij;
   var vPend=VALES.filter(function(v){return v.st!=='cob';}).reduce(function(s,v){return s+nv(v.monto);},0);
   var totalPersonas=rm.reduce(function(s,r){return s+nv(r.personas);},0);
+  var upcoming=getUpcomingDates(45);
 
-  // HEADER
+  // ── HEADER ──
+  var sit=getSitCard(real,rm,fij,upcoming,daysLeft);
   q('d-header').innerHTML=
-    '<div style="margin-bottom:12px;">'+
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
-    '<div>'+
-    '<div class="pt">'+MESESC[now.getMonth()]+' '+now.getFullYear()+'</div>'+
-    '<div style="font-size:13px;color:var(--inks);margin-top:1px;">'+fechaHoy+'</div>'+
-    '</div>'+
-    '<div style="text-align:right;flex-shrink:0;background:var(--c1);color:#fff;border-radius:var(--r);padding:8px 12px;">'+
-    '<div style="font-size:10.5px;opacity:.8;">Cierre del mes</div>'+
-    '<div style="font-size:16px;font-weight:700;">en '+daysLeft+' días</div>'+
-    '<div style="font-size:10.5px;opacity:.8;">'+Math.round(dayOfMonth/daysInMonth*100)+'% del mes transcurrido</div>'+
-    '</div></div></div>';
+    '<div style="margin-bottom:4px;"><div style="font-size:19px;font-family:\'Fraunces\',serif;font-weight:600;color:var(--ink);">'+MESESC[now.getMonth()]+' '+now.getFullYear()+'</div>'+
+    '<div style="font-size:12.5px;color:var(--inks);">'+fechaHoy+'</div></div>'+
+    '<div class="sit '+sit.cls+'"><div class="sit-ttl">'+sit.ico+' '+esc(sit.ttl)+'</div>'+
+    '<div class="sit-sub">'+esc(sit.sub)+'</div>'+
+    '<div class="sit-rec">→ '+esc(sit.rec)+'</div></div>';
 
-  // METRICS
+  // ── 3 MÉTRICAS ──
   var dm=q('d-metrics');
   if(!rm.length){
-    dm.innerHTML='<div class="mc s2"><div class="ml">Sin eventos registrados en '+MESESC[now.getMonth()]+' '+now.getFullYear()+'</div><div class="mv" style="font-size:14px;color:var(--inks);">El administrador registrará los eventos aquí.</div></div>';
+    dm.innerHTML='<div class="card"><div class="cb" style="text-align:center;color:var(--inks);font-size:13px;">Sin eventos registrados en '+MESESC[now.getMonth()]+'. El administrador registrará los eventos aquí.</div></div>';
   }else{
-    var trendR=totLm.res>0?Math.round((real-totLm.res)/totLm.res*100):null;
-    dm.innerHTML=
-      '<div class="mc"><div class="ml">Ingresos comida</div><div class="mv">'+S(tot.ingC)+'</div><div class="ms">'+rm.length+' evento'+(rm.length!==1?'s':'')+'</div></div>'+
-      '<div class="mc"><div class="ml">Ingresos bar</div><div class="mv">'+S(tot.ingB)+'</div><div class="ms">'+pct(tot.ingB,tot.ingT)+' del total</div></div>'+
-      '<div class="mc s2 '+(real>=0?'gn':'rd')+'"><div class="ml">Utilidad real — '+MESESC[now.getMonth()]+' '+now.getFullYear()+'</div><div class="mv">'+S(real)+'</div>'+
-      '<div class="ms">Operativo '+S(tot.res)+' · Fijos '+S(fij)+(trendR!==null?' · vs ant. '+(trendR>=0?'▲+':'▼')+trendR+'%':'')+'</div></div>'+
-      (tot.cort>0?'<div class="mc s2 am"><div class="ml">⚠️ Cortesías no cobradas</div><div class="mv">'+S(tot.cort)+'</div><div class="ms">'+pct(tot.cort,tot.cort+tot.ingT)+' del consumo total</div></div>':'')+
-      (vPend>0?'<div class="mc s2 am"><div class="ml">📄 Vales pendientes de cobro</div><div class="mv">'+S(vPend)+'</div></div>':'');
+    var trendPct=totLm.ingT>0?Math.round((tot.ingT-totLm.ingT)/totLm.ingT*100):null;
+    var trendTxt=trendPct!==null?(trendPct>=0?'▲+':'▼')+trendPct+'% vs ant.':'';
+    dm.innerHTML='<div class="m3">'+
+      '<div class="m3c"><div class="m3l">Ingresos del mes</div><div class="m3v">'+S(tot.ingT).replace('S/ ','')+'</div><div class="m3s">S/ · '+rm.length+' evento'+(rm.length!==1?'s':'')+'</div></div>'+
+      '<div class="m3c '+(real>=0?'pos':'neg')+'"><div class="m3l">Utilidad real</div><div class="m3v">'+(real>=0?'':'-')+''+S(Math.abs(real)).replace('S/ ','')+'</div><div class="m3s">S/ · '+esc(trendTxt)+'</div></div>'+
+      '<div class="m3c"><div class="m3l">Bar del total</div><div class="m3v">'+Math.round(tot.ingT>0?tot.ingB/tot.ingT*100:0)+'%</div><div class="m3s">'+S(tot.ingB).replace('S/ ','')+' S/</div></div>'+
+      '</div>';
   }
 
-  renderInsights(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr);
+  // ── GRÁFICA 1: TENDENCIA POR EVENTO ──
+  var sortedAll=REG.slice().sort(function(a,b){return(a.fecha||'').localeCompare(b.fecha||'');});
+  var last10=sortedAll.slice(-10);
+  var vbEl=q('d-trend');
+  if(last10.length>=2){
+    var maxV=Math.max.apply(null,last10.map(function(r){return calcReg(r).ingT;}));
+    var bars=last10.map(function(r){
+      var c=calcReg(r);var h=maxV>0?Math.round(c.ingT/maxV*85):4;
+      var parts=(r.fecha||'').split('-');
+      var lbl=parts[2]+' '+['en','fe','ma','ab','ma','ju','ju','ag','se','oc','no','di'][parseInt(parts[1])-1];
+      var tipoPts=r.tipo==='especial'?'#7C3AED':r.tipo==='contrato'?'#2563EB':'var(--c1)';
+      return'<div class="vb-c">'+
+        '<div class="vb-lv">'+S(c.ingT).replace('S/ ','')+'</div>'+
+        '<div class="vb-b" style="height:0;background:'+tipoPts+';" data-h="'+h+'px"></div>'+
+        '<div class="vb-ll">'+esc(lbl)+'</div></div>';
+    }).join('');
+    vbEl.innerHTML='<div class="cht"><div class="cht-hdr"><div class="cht-ttl">📈 Ingresos por evento</div>'+
+      '<div style="font-size:10px;color:var(--inks);">últimos '+last10.length+'</div></div>'+
+      '<div class="vb-w"><div class="vb-xl">'+bars+'</div></div>'+
+      '<div style="display:flex;gap:10px;padding:0 14px 10px;font-size:10px;color:var(--inks);">'+
+      '<span>🟣 Evento especial</span><span>🔵 Contrato</span><span style="color:var(--c1);">■ Domingo regular</span></div>'+
+      '</div>';
+    setTimeout(function(){document.querySelectorAll('.vb-b[data-h]').forEach(function(el){el.style.height=el.getAttribute('data-h');});},120);
+  }else{
+    vbEl.innerHTML='';
+  }
 
-  // TOP DISHES
-  if(rm.length){
-    var dc={};rm.forEach(function(r){(r.ventas||[]).forEach(function(v){if(!dc[v.nm])dc[v.nm]={qty:0,val:0,ev:0};dc[v.nm].qty+=nv(v.qty);dc[v.nm].val+=nv(v.pr)*nv(v.qty);dc[v.nm].ev++;});});
-    var sortedD=Object.keys(dc).filter(function(k){return dc[k].qty>0;}).sort(function(a,b){return dc[b].val-dc[a].val;});
-    if(sortedD.length){
-      var medals=['🥇','🥈','🥉','4°','5°'];
-      q('d-top').innerHTML='<div class="card"><div class="ch"><div class="ch-t">🏆 Platos más vendidos del mes</div></div><div class="cb">'+
-        sortedD.slice(0,5).map(function(nm,i){return'<div class="trow"><div class="trk">'+medals[i]+'</div><div class="tnm"><div class="tn">'+esc(nm)+'</div><div class="tc">'+Math.round(dc[nm].qty)+' unid · '+dc[nm].ev+' evento'+(dc[nm].ev!==1?'s':'')+'</div></div><div class="tv">'+S(dc[nm].val)+'</div></div>';}).join('')+'</div></div>';
-    }
-    var consTotal=tot.ingT+tot.cort+tot.vale;
-    q('d-cobros').innerHTML='<div class="card"><div class="ch"><div class="ch-t">💳 Control de cobros del mes</div></div><div class="cb">'+
-      '<div class="dr"><span class="dl">Total consumido</span><span class="dv">'+S(consTotal)+'</span></div>'+
-      '<div class="dr"><span class="dl">Total cobrado</span><span class="dv ok">'+S(tot.ingT)+'</span></div>'+
-      '<div class="dr"><span class="dl">Cortesías (no cobrado)</span><span class="dv '+(tot.cort>0?'wa':'ok')+'">'+S(tot.cort)+'</span></div>'+
-      '<div class="dr"><span class="dl">Vales por cobrar</span><span class="dv '+(tot.vale>0?'wa':'ok')+'">'+S(tot.vale)+'</span></div>'+
+  // ── GRÁFICA 2: PLATOS MÁS VENDIDOS ──
+  var dc={};
+  rm.forEach(function(r){(r.ventas||[]).forEach(function(v){
+    if(!dc[v.nm])dc[v.nm]={qty:0,val:0};
+    dc[v.nm].qty+=nv(v.qty);dc[v.nm].val+=nv(v.pr)*nv(v.qty);
+  });});
+  _chartData.dishes=Object.keys(dc).map(function(nm){return{nm:nm,qty:dc[nm].qty,val:dc[nm].val};});
+  var hbEl=q('d-dishes');
+  if(_chartData.dishes.length>0){
+    hbEl.innerHTML='<div class="cht"><div class="cht-hdr">'+
+      '<div class="cht-ttl">🏆 Platos del mes</div>'+
+      '<div class="tgg">'+
+      '<button class="tg '+(  _chartMode==='val'?'on':'')+'" onclick="setChartMode(\'val\')" data-mode="val">S/ Ingreso</button>'+
+      '<button class="tg '+(_chartMode==='qty'?'on':'')+'" onclick="setChartMode(\'qty\')" data-mode="qty">Cantidad</button>'+
+      '</div></div><div class="hb-w" id="hb-inner"></div></div>';
+    renderDishBars();
+  }else{
+    hbEl.innerHTML='';
+  }
+
+  // ── ANÁLISIS ACORDEÓN ──
+  var rubros=buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr);
+  var crit=rubros.filter(function(r){return r.estado==='crit';});
+  var warn=rubros.filter(function(r){return r.estado==='warn';});
+  var good=rubros.filter(function(r){return r.estado==='good';});
+  var info=rubros.filter(function(r){return r.estado==='info';});
+  var metaStr=(crit.length?'<span style="color:var(--er);">🔴 '+crit.length+'</span> ':'')+
+              (warn.length?'<span style="color:#E65100;">🟡 '+warn.length+'</span> ':'')+
+              (good.length?'<span style="color:var(--ok);">🟢 '+good.length+'</span> ':'')+
+              (info.length?'<span style="color:#3563E9;">🔵 '+info.length+'</span>':'');
+
+  var accHtml='<div class="acc"><div class="acc-h" onclick="togAcc()">'+
+    '<div><div class="acc-ht">🧠 Análisis del negocio</div>'+
+    '<div class="acc-meta" style="margin-top:2px;">'+metaStr+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:6px;">'+
+    '<div style="font-size:11px;color:var(--inks);" id="acc-lbl">Ver todo ▾</div></div></div>'+
+    '<div id="acc-body" style="display:none;"><div class="acc-b">';
+
+  // Always show crit+warn first
+  var priority=crit.concat(warn);
+  var rest=info.concat(good);
+
+  priority.concat(rest).forEach(function(r){
+    accHtml+='<div class="rub '+r.estado+'">'+
+      '<div class="rub-ico">'+r.ico+'</div>'+
+      '<div class="rub-bd">'+
+      '<div class="rub-hd"><div class="rub-nm">'+esc(r.nombre)+'</div>'+
+      '<div class="rub-vl">'+esc(r.valor)+'</div></div>'+
+      '<div class="rub-dg">'+esc(r.diag)+'</div>'+
+      (r.rec?'<div class="rub-rc">→ '+esc(r.rec)+'</div>':'')+
       '</div></div>';
-    var sorted2=REG.slice().sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
-    if(sorted2.length){
-      var r0=sorted2[0];var c0=calcReg(r0);
-      q('d-last').innerHTML='<div class="card"><div class="ch"><div class="ch-t">📋 Último evento registrado</div></div><div class="cb">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<div><div style="font-size:14px;font-weight:600;">'+esc(r0.evento||'Evento')+'</div>'+
-        '<div style="font-size:12px;color:var(--inks);">'+fmtD(r0.fecha)+(r0.tipo?' · '+TIPO_LBL[r0.tipo]:'')+(nv(r0.personas)>0?' · '+nv(r0.personas)+' personas':'')+'</div></div>'+
-        '<span class="pill '+(c0.res>=0?'p-ok':'p-er')+'">'+S(c0.res)+'</span></div>'+
-        '<div class="dr"><span class="dl">Ingresos totales</span><span class="dv">'+S(c0.ingT)+'</span></div>'+
-        '<div class="dr"><span class="dl">Gastos totales</span><span class="dv er">'+S(c0.gas)+'</span></div>'+
-        (c0.gasPersonal?'<div class="dr"><span class="dl">↳ Personal del evento</span><span class="dv">'+S(c0.gasPersonal)+'</span></div>':'')+
-        (c0.gasExtras?'<div class="dr"><span class="dl">↳ Otros gastos</span><span class="dv">'+S(c0.gasExtras)+'</span></div>':'')+
-        '</div></div>';
-    }
-  }else{q('d-top').innerHTML='';q('d-cobros').innerHTML='';q('d-last').innerHTML='';}
+  });
+  accHtml+='</div></div></div>';
+  q('d-insights').innerHTML=accHtml;
 
+  // Auto-expand if critical alerts exist
+  if(crit.length>0)setTimeout(function(){togAcc(true);},200);
+
+  // ── ÚLTIMO EVENTO ──
+  var sorted2=REG.slice().sort(function(a,b){return(b.fecha||'').localeCompare(a.fecha||'');});
+  if(sorted2.length){
+    var r0=sorted2[0];var c0=calcReg(r0);
+    q('d-last').innerHTML='<div class="coll"><div class="coll-h" onclick="togColl(\'dlb\',this)">'+
+      '<div><div class="coll-t">📋 Último evento: '+esc(r0.evento||'Evento')+'</div>'+
+      '<div style="font-size:11.5px;color:var(--inks);">'+fmtD(r0.fecha)+(r0.tipo?' · '+TIPO_LBL[r0.tipo]:'')+(nv(r0.personas)>0?' · '+nv(r0.personas)+' pers.':'')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;"><span class="pill '+(c0.res>=0?'p-ok':'p-er')+'">'+S(c0.res)+'</span>'+
+      '<div class="coll-a">▾</div></div></div>'+
+      '<div id="dlb" style="display:none;"><div class="coll-b">'+
+      '<div class="dr"><span class="dl">Ingresos</span><span class="dv">'+S(c0.ingT)+'</span></div>'+
+      '<div class="dr"><span class="dl">Gastos</span><span class="dv er">'+S(c0.gas)+'</span></div>'+
+      (c0.cort?'<div class="dr"><span class="dl">Cortesías</span><span class="dv wa">'+S(c0.cort)+'</span></div>':'')+
+      (c0.vale?'<div class="dr"><span class="dl">Vales</span><span class="dv wa">'+S(c0.vale)+'</span></div>':'')+
+      '</div></div></div>';
+  }else{q('d-last').innerHTML='';}
+
+  // ── STOCK ──
   var alts=STOCK.filter(function(s){return nv(s.qty)<=nv(s.min);});
   if(alts.length){
-    q('d-stock').innerHTML='<div class="card"><div class="ch"><div class="ch-t">📦 Stock — alertas</div></div><div style="padding:0;">'+
-      alts.slice(0,8).map(function(s){var cls=nv(s.qty)===0?'er':'wa';return'<div class="srow"><div class="sdot '+cls+'"></div><div class="sn">'+esc(s.nm)+'</div><div class="sv">'+nv(s.qty).toFixed(1)+' '+esc(s.u)+'</div></div>';}).join('')+'</div></div>';
+    q('d-stock').innerHTML='<div class="coll"><div class="coll-h" onclick="togColl(\'dsb\',this)">'+
+      '<div class="coll-t">📦 Stock — '+alts.length+' alerta'+(alts.length!==1?'s':'')+'</div>'+
+      '<div class="coll-a">▾</div></div>'+
+      '<div id="dsb" style="display:none;"><div style="padding:0 0 8px;">'+
+      alts.slice(0,8).map(function(s){var cls=nv(s.qty)===0?'er':'wa';return'<div class="srow"><div class="sdot '+cls+'"></div><div class="sn">'+esc(s.nm)+'</div><div class="sv">'+nv(s.qty).toFixed(1)+' '+esc(s.u)+'</div></div>';}).join('')+
+      '</div></div></div>';
   }else{q('d-stock').innerHTML='';}
 }
 
-// ══ CALENDARIO PERUANO ══
-var CAL_PE=[
-  {mes:1,dia:1,nm:'Año Nuevo',desc:'Familias celebran juntas. Alta demanda de almuerzos y cenas.',demanda:2},
-  {mes:2,dia:null,nm:'Carnaval de Cajamarca',desc:'El evento más importante del año en Cajamarca. Máxima afluencia de turistas y familias. Prepara el doble del stock habitual.',demanda:3},
-  {mes:3,dia:null,nm:'Semana Santa',desc:'Fecha de alta demanda familiar. Muchos grupos visitan restaurantes campestres durante los días feriados.',demanda:2},
-  {mes:5,dia:1,nm:'Día del Trabajo',desc:'Feriado nacional. Oportunidad para evento especial o almuerzo familiar.',demanda:2},
-  {mes:5,dia:null,nm:'Día de la Madre',desc:'El evento de mayor afluencia del año para restaurantes familiares. Capacidad máxima esperada (+200 personas).',demanda:3},
-  {mes:6,dia:null,nm:'Día del Padre',desc:'Segundo evento más importante del año. Alta afluencia familiar (90-120 personas estimadas).',demanda:2},
-  {mes:7,dia:28,nm:'Fiestas Patrias — 28 de julio',desc:'Feriado de alta demanda. Familias y grupos celebran la independencia.',demanda:2},
-  {mes:7,dia:29,nm:'Fiestas Patrias — 29 de julio',desc:'Segundo día feriado de Fiestas Patrias. Mantén stock para dos días consecutivos.',demanda:2},
-  {mes:8,dia:30,nm:'Santa Rosa de Lima',desc:'Feriado nacional. Oportunidad para evento especial.',demanda:1},
-  {mes:10,dia:8,nm:'Combate de Angamos',desc:'Feriado nacional.',demanda:1},
-  {mes:11,dia:1,nm:'Día de Todos los Santos',desc:'Feriado. Familias se reúnen — oportunidad para almuerzo especial.',demanda:1},
-  {mes:12,dia:8,nm:'Inmaculada Concepción',desc:'Feriado nacional.',demanda:1},
-  {mes:12,dia:25,nm:'Navidad',desc:'Alta demanda familiar. Cenas y almuerzos de celebración.',demanda:2},
-  {mes:12,dia:31,nm:'Fin de Año',desc:'Cenas de año nuevo. Considerar servicio especial con reserva anticipada.',demanda:2}
-];
-
-function getUpcomingDates(days){
-  var now=new Date();var result=[];
-  var year=now.getFullYear();
-  CAL_PE.forEach(function(f){
-    var dates=[];
-    if(f.dia){
-      dates.push(new Date(year,f.mes-1,f.dia));
-      dates.push(new Date(year+1,f.mes-1,f.dia));
-    }else{
-      // Variable dates — estimate
-      if(f.nm.indexOf('Madre')>=0){
-        // 2nd Sunday of May
-        var d=new Date(year,4,1);while(d.getDay()!==0)d.setDate(d.getDate()+1);d.setDate(d.getDate()+7);
-        dates.push(d);d=new Date(year+1,4,1);while(d.getDay()!==0)d.setDate(d.getDate()+1);d.setDate(d.getDate()+7);dates.push(d);
-      }else if(f.nm.indexOf('Padre')>=0){
-        // 3rd Sunday of June
-        var d2=new Date(year,5,1);while(d2.getDay()!==0)d2.setDate(d2.getDate()+1);d2.setDate(d2.getDate()+14);
-        dates.push(d2);d2=new Date(year+1,5,1);while(d2.getDay()!==0)d2.setDate(d2.getDate()+1);d2.setDate(d2.getDate()+14);dates.push(d2);
-      }else if(f.nm.indexOf('Carnaval')>=0){
-        // Approx Feb 15 each year
-        dates.push(new Date(year,1,15));dates.push(new Date(year+1,1,15));
-      }else if(f.nm.indexOf('Semana Santa')>=0){
-        // Approx April 10 (variable)
-        dates.push(new Date(year,3,10));dates.push(new Date(year+1,3,10));
-      }
-    }
-    dates.forEach(function(d){
-      var diff=Math.ceil((d-now)/(1000*60*60*24));
-      if(diff>0&&diff<=days){result.push({nm:f.nm,dias:diff,desc:f.desc,demanda:f.demanda});}
-    });
-  });
-  return result.sort(function(a,b){return a.dias-b.dias;});
+function togAcc(forceOpen){
+  var b=q('acc-body');var l=q('acc-lbl');if(!b)return;
+  var open=forceOpen===true||b.style.display==='none';
+  b.style.display=open?'block':'none';
+  if(l)l.innerHTML=open?'Cerrar ▴':'Ver todo ▾';
 }
 
-// ══ MOTOR DE ANÁLISIS — 11 RUBROS SISTEMATIZADOS ══
-function renderInsights(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr){
+function togColl(id,btn){
+  var b=q(id);if(!b)return;
+  var open=b.style.display==='none';
+  b.style.display=open?'block':'none';
+  var arr=btn&&btn.querySelector('.coll-a');
+  if(arr)arr.className='coll-a'+(open?' op':'');
+}
+
+function setChartMode(mode){
+  _chartMode=mode;
+  document.querySelectorAll('.tg').forEach(function(b){b.className='tg'+(b.getAttribute('data-mode')===mode?' on':'');});
+  renderDishBars();
+}
+
+function renderDishBars(){
+  var el=q('hb-inner');if(!el)return;
+  var sorted=_chartData.dishes.slice().sort(function(a,b){return b[_chartMode]-a[_chartMode];}).slice(0,7);
+  var maxV=sorted.length?sorted[0][_chartMode]:1;
+  el.innerHTML=sorted.map(function(d){
+    var v=d[_chartMode];
+    var w=maxV>0?Math.round(v/maxV*100):0;
+    var lbl=_chartMode==='val'?S(v).replace('S/ ','S/'):(Math.round(v)+' unid');
+    return'<div class="hb-r">'+
+      '<div class="hb-l" title="'+esc(d.nm)+'">'+esc(d.nm)+'</div>'+
+      '<div class="hb-t"><div class="hb-b" data-w="'+w+'%"></div></div>'+
+      '<div class="hb-v">'+lbl+'</div></div>';
+  }).join('');
+  setTimeout(function(){el.querySelectorAll('.hb-b[data-w]').forEach(function(b){b.style.width=b.getAttribute('data-w');});},80);
+}
+
+// ══ BUILDER DE RUBROS (devuelve array) ══
+function buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr){
   var now=new Date();
   var MESESC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  var fechaCorte=now.getDate()+' de '+['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][now.getMonth()]+' de '+now.getFullYear();
   var personalFijoMes=PERSONAL.filter(function(p){return p.activo&&p.tipo==='fijo-mensual';}).reduce(function(s,p){return s+nv(p.monto);},0);
-
   var rubros=[];
+  function add(ico,nombre,estado,valor,diag,rec){rubros.push({ico:ico,nombre:nombre,estado:estado,valor:valor,diag:diag,rec:rec});}
 
-  function addRubro(ico,nombre,estado,valor,diag,rec){
-    rubros.push({ico:ico,nombre:nombre,estado:estado,valor:valor,diag:diag,rec:rec});
-  }
-
-  // ── RUBRO 1: RENTABILIDAD ──
+  // 1. RENTABILIDAD
   if(rm.length>0||fij>0){
     if(real<0){
-      var gap=Math.abs(real);
-      addRubro('🏦','Rentabilidad','crit',
-        'Pérdida: '+S(gap),
-        'Los gastos fijos ('+S(fij)+') superan el resultado operativo ('+S(tot.res)+'). El negocio pierde '+S(gap)+' este mes.',
-        'El próximo evento debe generar al menos '+S(gap)+' adicionales para cerrar el mes en cero. Prioriza eventos con mayor número de personas y maximiza el bar.');
+      add('🏦','Rentabilidad','crit','Pérdida: '+S(Math.abs(real)),
+        'Gastos fijos ('+S(fij)+') superan el resultado operativo ('+S(tot.res)+'). Pérdida neta: '+S(Math.abs(real))+'.',
+        'El próximo evento debe generar al menos '+S(Math.abs(real))+' extra. Prioriza mayor asistencia e impulsa el bar.');
     }else if(fij>0&&real<fij*0.15){
-      addRubro('🏦','Rentabilidad','warn',
-        'Utilidad ajustada: '+S(real),
-        'El negocio es rentable pero el margen es muy estrecho ('+Math.round(real/fij*100)+'% sobre los fijos). Faltan '+daysLeft+' días para cerrar el mes.',
-        'Asegura al menos un evento adicional antes del cierre del mes. Con el ingreso promedio actual de '+S(Math.round(tot.ingT/rm.length))+'/evento, un evento más añadiría aproximadamente '+S(Math.round(tot.res/rm.length))+' al resultado.');
+      add('🏦','Rentabilidad','warn','Utilidad ajustada: '+S(real),
+        'Rentable pero con margen estrecho ('+Math.round(real/fij*100)+'% sobre fijos). Faltan '+daysLeft+' días.',
+        'Un evento adicional añadiría ~'+S(Math.round(tot.res/Math.max(rm.length,1)))+' al resultado. Activa promoción esta semana.');
     }else if(real>=0){
-      addRubro('🏦','Rentabilidad','good',
-        'Utilidad real: '+S(real),
-        'El negocio genera utilidad positiva. El resultado operativo ('+S(tot.res)+') cubre los fijos ('+S(fij)+') con '+S(real)+' de ganancia neta.',
-        'Mantén el ritmo. Considera destinar parte de la utilidad a reposición de stock y mejora del local.');
+      add('🏦','Rentabilidad','good','Utilidad real: '+S(real),
+        'Resultado operativo ('+S(tot.res)+') cubre los fijos ('+S(fij)+') con '+S(real)+' de ganancia neta.',
+        'Considera destinar parte a reposición de stock o mejoras del local.');
     }else{
-      addRubro('🏦','Rentabilidad','info',
-        'Resultado operativo: '+S(tot.res),
-        'No hay gastos fijos registrados para '+MESESC[now.getMonth()]+'. El resultado operativo del mes es '+S(tot.res)+'.',
-        'Registra los gastos fijos del mes (planilla, alquiler, servicios) en la sección MES para obtener la utilidad real.');
+      add('🏦','Rentabilidad','info','Operativo: '+S(tot.res),
+        'Sin gastos fijos registrados para '+MESESC[now.getMonth()]+'. Resultado operativo: '+S(tot.res)+'.',
+        'Registra planilla, alquiler y servicios en la sección MES para ver la utilidad real.');
     }
   }
 
-  // ── RUBRO 2: TENDENCIA ──
+  // 2. TENDENCIA
   if(totLm.ingT>0&&rm.length>0){
     var avgThis=tot.ingT/rm.length;
     var avgLast=rlm.length>0?totLm.ingT/rlm.length:0;
-    var trendEvento=avgLast>0?Math.round((avgThis-avgLast)/avgLast*100):null;
-    var trendTotal=Math.round((tot.ingT-totLm.ingT)/totLm.ingT*100);
-    if(trendEvento!==null){
-      if(trendEvento>15){
-        addRubro('📈','Tendencia vs mes anterior','good',
-          '+'+trendEvento+'% por evento vs '+MESESC[parseInt(lmStr.split('-')[1])-1],
-          'El ingreso promedio por evento subió de '+S(Math.round(avgLast))+' a '+S(Math.round(avgThis))+'. Los eventos de este mes son más rentables que el mes anterior.',
-          'Analiza qué cambió positivamente: ¿más personas? ¿mejor consumo del bar? ¿menos cortesías? Repite las condiciones que generaron este resultado.');
-      }else if(trendEvento>=-10){
-        addRubro('📊','Tendencia vs mes anterior','warn',
-          trendEvento>=0?'+'+trendEvento+'%':trendEvento+'% por evento vs '+MESESC[parseInt(lmStr.split('-')[1])-1],
-          'El ingreso por evento se mantiene similar al mes anterior ('+S(Math.round(avgLast))+' → '+S(Math.round(avgThis))+'). No hay crecimiento ni caída significativa.',
-          'Para crecer, identifica una acción concreta: aumentar la asistencia con promoción anticipada, subir el ticket por persona o activar el bar más agresivamente.');
-      }else{
-        addRubro('📉','Tendencia vs mes anterior','crit',
-          trendEvento+'% por evento vs '+MESESC[parseInt(lmStr.split('-')[1])-1],
-          'El ingreso por evento cayó de '+S(Math.round(avgLast))+' a '+S(Math.round(avgThis))+'. Los eventos de este mes generan significativamente menos que el mes anterior.',
-          'Investiga la causa: ¿menor asistencia? ¿más cortesías? ¿menos consumo del bar? Activa promoción en redes con 7 días de anticipación al próximo evento.');
-      }
+    var tEv=avgLast>0?Math.round((avgThis-avgLast)/avgLast*100):null;
+    if(tEv!==null){
+      if(tEv>15)add('📈','Tendencia','good','+'+tEv+'% por evento','Ingreso/evento subió de '+S(Math.round(avgLast))+' a '+S(Math.round(avgThis))+'. Eventos más rentables que el mes anterior.','Identifica qué cambió positivamente y repítelo: ¿más personas, mejor bar, menos cortesías?');
+      else if(tEv>=-10)add('📊','Tendencia','warn',(tEv>=0?'+':'')+tEv+'% por evento','Ingreso/evento estable respecto al mes anterior ('+S(Math.round(avgLast))+' → '+S(Math.round(avgThis))+'). Sin crecimiento significativo.','Para crecer: aumenta asistencia con promoción anticipada o sube el ticket por persona con entradas y bar.');
+      else add('📉','Tendencia','crit',tEv+'% por evento','Ingreso/evento cayó de '+S(Math.round(avgLast))+' a '+S(Math.round(avgThis))+'. Los eventos de este mes generan menos.','Investiga la causa y activa promoción en redes con 7 días de anticipación al próximo evento.');
     }
   }
 
-  // ── RUBRO 3: PROYECCIÓN DE CIERRE ──
+  // 3. PROYECCIÓN
   if(rm.length>0&&daysLeft>0){
-    var avgPerEvent=tot.ingT/rm.length;
-    var avgResPerEvent=tot.res/rm.length;
-    // Estimate remaining events based on current pace
-    var eventsPerDay=rm.length/dayOfMonth;
-    var projEvents=Math.max(1,Math.round(eventsPerDay*daysLeft));
-    var projIngreso=tot.ingT+projEvents*avgPerEvent;
-    var projRes=tot.res+projEvents*avgResPerEvent;
-    var projReal=projRes-fij;
-    var faltaFijos=fij-tot.res;
-    addRubro('🎯','Proyección de cierre del mes','info',
-      'Estimado: '+S(Math.round(projIngreso)),
-      'Al ritmo actual ('+rm.length+' evento'+(rm.length!==1?'s':'')+' en '+dayOfMonth+' días, '+S(Math.round(avgPerEvent))+'/evento), se proyectan ~'+projEvents+' evento'+(projEvents!==1?'s':'')+' más en los '+daysLeft+' días restantes. Cierre estimado: '+S(Math.round(projIngreso))+' ingresos, utilidad real ~'+S(Math.round(projReal))+'.',
-      faltaFijos>0&&tot.res<fij
-        ?'Aún faltan '+S(Math.round(faltaFijos))+' en resultado operativo para cubrir los fijos. Con el promedio actual necesitas '+Math.ceil(faltaFijos/avgResPerEvent)+' evento'+(Math.ceil(faltaFijos/avgResPerEvent)!==1?'s':'')+' más solo para llegar al punto de equilibrio.'
-        :'Proyección favorable. Si se mantiene el ritmo, el mes cerrará positivo. Asegura la operación de los próximos eventos.');
+    var avgPE=tot.ingT/rm.length;var avgRPE=tot.res/rm.length;
+    var evPerDay=rm.length/dayOfMonth;var projEv=Math.max(1,Math.round(evPerDay*daysLeft));
+    var projIngT=tot.ingT+projEv*avgPE;var projReal=(tot.res+projEv*avgRPE)-fij;
+    var faltaFij=fij>tot.res?fij-tot.res:0;
+    add('🎯','Proyección de cierre','info','Estimado: '+S(Math.round(projIngT)),
+      'Ritmo actual: '+S(Math.round(avgPE))+'/evento. Se proyectan ~'+projEv+' evento'+(projEv!==1?'s':'')+' más en '+daysLeft+' días. Cierre estimado: '+S(Math.round(projIngT))+' ingresos, utilidad ~'+S(Math.round(projReal))+'.',
+      faltaFij>0?'Aún faltan '+S(Math.round(faltaFij))+' en resultado operativo para cubrir los fijos. Necesitas ~'+Math.ceil(faltaFij/avgRPE)+' evento'+(Math.ceil(faltaFij/avgRPE)!==1?'s':'')+' más.':'Proyección favorable si se mantiene el ritmo. Asegura la operación de los próximos eventos.');
   }
 
-  // ── RUBRO 4: RENDIMIENTO DEL BAR ──
+  // 4. BAR
   if(rm.length>0&&tot.ingT>0){
-    var barPct=tot.ingB/tot.ingT*100;
-    var barIdealMin=18,barIdealMax=30;
-    if(barPct<12){
-      var potencial=tot.ingT*0.18-tot.ingB;
-      addRubro('🍺','Rendimiento del bar','crit',
-        Math.round(barPct)+'% de ingresos (crítico)',
-        'El bar genera solo '+S(tot.ingB)+' de '+S(tot.ingT)+' totales. El rango saludable para un Grill & Bar es 18-30%. Estás '+Math.round(18-barPct)+' puntos por debajo del mínimo. Si el bar llegara al 18%, generaría '+S(Math.round(potencial))+' adicionales este mes.',
-        'Acciones inmediatas: (1) Ofrece la primera bebida al sentar cada mesa, (2) crea combos bebida+plato, (3) capacita al personal para sugerir activamente, (4) revisa si los precios de bebidas son competitivos con la competencia.');
-    }else if(barPct<18){
-      var gapBar=tot.ingT*0.18-tot.ingB;
-      addRubro('🍺','Rendimiento del bar','warn',
-        Math.round(barPct)+'% de ingresos (por mejorar)',
-        'El bar aporta '+S(tot.ingB)+' — debajo del rango óptimo (18-30%). Para llegar al mínimo recomendado necesita generar '+S(Math.round(gapBar))+' más este mes.',
-        'Si cada mesa consumiera una bebida adicional por evento, el bar subiría aproximadamente '+S(Math.round(gapBar/rm.length))+' por evento. Implementa la sugerencia activa de bebidas como protocolo de servicio.');
-    }else if(barPct<=30){
-      addRubro('🍺','Rendimiento del bar','good',
-        Math.round(barPct)+'% de ingresos (óptimo)',
-        'El bar aporta '+S(tot.ingB)+' — dentro del rango ideal (18-30%) para un Grill & Bar. Buen equilibrio entre comida y bebida.',
-        'Mantén el ritmo. Asegura stock de cervezas y bebidas populares antes de cada evento.');
-    }else{
-      addRubro('🍺','Rendimiento del bar','good',
-        Math.round(barPct)+'% de ingresos (excelente)',
-        'El bar supera el 30% — rendimiento excepcional. Genera '+S(tot.ingB)+' de ingresos totales.',
-        'Resultado excepcional. Evalúa ampliar la carta de bebidas o agregar cocteles de autor para mantener este nivel.');
-    }
+    var bp=tot.ingB/tot.ingT*100;
+    if(bp<12){var pt=Math.round(tot.ingT*0.18-tot.ingB);add('🍺','Rendimiento del bar','crit',Math.round(bp)+'% (mín. recom. 18%)',S(tot.ingB)+' generados. Si llegara al 18% produciría '+S(pt)+' adicionales este mes.','(1) Primera bebida al sentar, (2) combos bebida+plato, (3) personal capacitado para sugerir activamente.');}
+    else if(bp<18){var g2=Math.round(tot.ingT*0.18-tot.ingB);add('🍺','Rendimiento del bar','warn',Math.round(bp)+'% (por mejorar)',S(tot.ingB)+' generados. Faltan '+S(g2)+' para alcanzar el mínimo recomendado (18%).','Una bebida adicional por mesa/evento añadiría ~'+S(Math.round(g2/Math.max(rm.length,1)))+'/evento. Protocolo: sugerencia activa al tomar el pedido.');}
+    else if(bp<=30){add('🍺','Rendimiento del bar','good',Math.round(bp)+'% (óptimo 18-30%)',S(tot.ingB)+' en bebidas. Dentro del rango ideal para un Grill & Bar.','Mantén el ritmo. Asegura stock de cervezas y gaseosas antes de cada evento.');}
+    else{add('🍺','Rendimiento del bar','good',Math.round(bp)+'% (excelente >30%)',S(tot.ingB)+' en bebidas — rendimiento excepcional.','Evalúa ampliar la carta: cocteles de autor, tragos especiales o combos premium.');}
   }
 
-  // ── RUBRO 5: COSTO DE PERSONAL ──
+  // 5. PERSONAL
   if(personalFijoMes>0&&rm.length>0&&tot.ingT>0){
-    var pctPers=personalFijoMes/tot.ingT*100;
-    if(pctPers>30){
-      addRubro('👥','Costo de personal fijo','crit',
-        Math.round(pctPers)+'% de ingresos (insostenible)',
-        'El personal de sueldo fijo ('+S(personalFijoMes)+'/mes) consume el '+Math.round(pctPers)+'% de los ingresos del mes. Por encima del 30% compromete la viabilidad del negocio.',
-        'Evalúa si algún rol puede convertirse a pago por evento. Para que el personal represente el 20%, necesitas ingresos mínimos de '+S(personalFijoMes/0.2*1)+' al mes. Con el promedio actual necesitas '+Math.ceil(personalFijoMes*5/tot.ingT*rm.length)+' eventos mensuales.');
-    }else if(pctPers>20){
-      addRubro('👥','Costo de personal fijo','warn',
-        Math.round(pctPers)+'% de ingresos (vigilar)',
-        'El personal fijo ('+S(personalFijoMes)+'/mes) representa el '+Math.round(pctPers)+'% de los ingresos. Manejable hoy, pero en meses de baja actividad puede subir a niveles críticos.',
-        'Con menos de '+Math.ceil(personalFijoMes/(tot.ingT/rm.length*0.20))+' eventos al mes, el personal fijo supera el 20%. Planifica al menos esa cantidad de eventos mensualmente.');
-    }else{
-      addRubro('👥','Costo de personal fijo','good',
-        Math.round(pctPers)+'% de ingresos (saludable)',
-        'El personal fijo ('+S(personalFijoMes)+'/mes) está en un nivel saludable (menos del 20% de ingresos).',
-        'Buen equilibrio laboral. Mantén el volumen actual de eventos para preservar este ratio.');
-    }
+    var pp=personalFijoMes/tot.ingT*100;
+    if(pp>30)add('👥','Costo personal fijo','crit',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes) consume el '+Math.round(pp)+'% de ingresos. Insostenible si supera el 30%.','Evalúa convertir algún rol a pago por evento. Para llegar al 20% necesitas ingresos mínimos de '+S(Math.round(personalFijoMes/0.20))+'.');
+    else if(pp>20)add('👥','Costo personal fijo','warn',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes): '+Math.round(pp)+'% de ingresos. En meses de baja actividad puede ser crítico.','Necesitas al menos '+Math.ceil(personalFijoMes/(tot.ingT/rm.length*0.20))+' eventos/mes para mantener el ratio bajo el 20%.');
+    else add('👥','Costo personal fijo','good',Math.round(pp)+'% de ingresos','Personal fijo ('+S(personalFijoMes)+'/mes) en nivel saludable (menos del 20% de ingresos).','Mantén el volumen de eventos actual para conservar este equilibrio.');
   }
 
-  // ── RUBRO 6: CONTROL DE CORTESÍAS ──
-  if(rm.length>0){
-    var totCons=tot.ingT+tot.cort+tot.vale;
-    var cortPct=totCons>0?tot.cort/totCons*100:0;
-    if(tot.cort>0){
-      if(cortPct>8){
-        addRubro('🤝','Control de cortesías','crit',
-          Math.round(cortPct)+'% del consumo (crítico)',
-          'Las cortesías suman '+S(tot.cort)+' — el '+Math.round(cortPct)+'% del consumo total. Equivale a '+(tot.cort/45).toFixed(1)+' Chanchos al Palo servidos sin cobrar. Por encima del 8% impacta directamente la utilidad.',
-          'Política inmediata: máximo 3 cortesías por evento con motivo registrado obligatorio. Revisa el historial de motivos para identificar si hay un patrón que se pueda controlar.');
-      }else if(cortPct>5){
-        addRubro('🤝','Control de cortesías','warn',
-          Math.round(cortPct)+'% del consumo (atención)',
-          'Las cortesías ('+S(tot.cort)+') están cerca del límite recomendado del 5%. Si sube un punto más, impactará visiblemente la utilidad.',
-          'Mantén el registro de motivos y monitorea que no supere el 5% el próximo mes. Si hay un evento especial con más invitados, ajusta la política previamente.');
-      }else{
-        addRubro('🤝','Control de cortesías','good',
-          Math.round(cortPct)+'% del consumo (aceptable)',
-          'Las cortesías ('+S(tot.cort)+') están dentro del rango aceptable (menos del 5% del consumo total).',
-          'Buen control. Mantén el registro de motivos como auditoría interna.');
-      }
-    }
+  // 6. CORTESÍAS
+  if(rm.length>0&&tot.cort>0){
+    var tc=tot.ingT+tot.cort+tot.vale;var cp=tc>0?tot.cort/tc*100:0;
+    if(cp>8)add('🤝','Control de cortesías','crit',Math.round(cp)+'% del consumo',S(tot.cort)+' en cortesías ('+Math.round(cp)+'%). Equivale a '+(tot.cort/45).toFixed(1)+' Chanchos al Palo no cobrados.','Máximo 3 cortesías/evento con motivo obligatorio. Revisa el historial para detectar patrones.');
+    else if(cp>5)add('🤝','Control de cortesías','warn',Math.round(cp)+'% del consumo',S(tot.cort)+' en cortesías. Cerca del límite recomendado (5%).','Monitorea que no supere el 5%. Refuerza la política de registro de motivos.');
+    else add('🤝','Control de cortesías','good',Math.round(cp)+'% del consumo',S(tot.cort)+' en cortesías — dentro del rango aceptable (menos del 5%).','Buen control. Mantén el registro de motivos para auditoría interna.');
   }
 
-  // ── RUBRO 7: RECUPERACIÓN DE VALES ──
+  // 7. VALES
+  var pendV=VALES.filter(function(v){return v.st!=='cob';});
+  var cobV=VALES.filter(function(v){return v.st==='cob';});
   if(VALES.length>0){
-    var pendVales=VALES.filter(function(v){return v.st!=='cob';});
-    var cobVales=VALES.filter(function(v){return v.st==='cob';});
-    var tasaCobro=VALES.length>0?Math.round(cobVales.length/VALES.length*100):100;
-    var oldestDays=0;
-    pendVales.forEach(function(v){if(v.fecha){var d=Math.floor((now-new Date(v.fecha))/(1000*60*60*24));if(d>oldestDays)oldestDays=d;}});
-    if(pendVales.length>0){
-      var estado2=oldestDays>14?'crit':oldestDays>7?'warn':'info';
-      addRubro('📄','Recuperación de vales',estado2,
-        S(vPend)+' pendientes · '+pendVales.length+' vales',
-        pendVales.length+' vale'+(pendVales.length!==1?'s':'')+' sin cobrar por '+S(vPend)+'. Tasa de cobro histórica: '+tasaCobro+'%. El vale más antiguo tiene '+oldestDays+' días sin cobrar.',
-        oldestDays>14
-          ?'URGENTE: Vales de más de 2 semanas tienen baja probabilidad de recuperación. Contacta directamente a los deudores esta semana antes del próximo evento.'
-          :'Contacta a los deudores 2-3 días antes del próximo evento. Ese es el momento de mayor disposición a pagar.');
+    if(pendV.length>0){
+      var oldest=0;
+      pendV.forEach(function(v){if(v.fecha){var d=Math.floor((now-new Date(v.fecha))/(1000*60*60*24));if(d>oldest)oldest=d;}});
+      var vs=oldest>14?'crit':oldest>7?'warn':'info';
+      add('📄','Recuperación de vales',vs,S(vPend)+' ('+pendV.length+' pendientes)',pendV.length+' vale'+(pendV.length!==1?'s':'')+' sin cobrar. El más antiguo: '+oldest+' días. Tasa de cobro: '+Math.round(cobV.length/VALES.length*100)+'%.',oldest>14?'URGENTE: Vales de más de 2 semanas. Contacta a los deudores esta semana antes que se enfríe la relación.':'Contacta a los deudores 2-3 días antes del próximo evento.');
     }else{
-      addRubro('📄','Recuperación de vales','good',
-        '100% cobrado ('+cobVales.length+' vales)',
-        'Todos los vales registrados han sido cobrados. Tasa de cobro: 100%.',
-        'Excelente gestión de cobros. Mantén el registro de vales en cada evento para continuar con este resultado.');
+      add('📄','Recuperación de vales','good','100% cobrado','Todos los vales registrados han sido cobrados. Tasa de cobro: 100%.','Excelente gestión de cobros. Continúa registrando cada vale en el momento del evento.');
     }
   }
 
-  // ── RUBRO 8: ANÁLISIS DE PLATOS ──
+  // 8. PLATOS
   if(rm.length>=2){
-    var dc2={};
-    rm.forEach(function(r){(r.ventas||[]).forEach(function(v){if(!dc2[v.nm])dc2[v.nm]={qty:0,val:0,ev:0};dc2[v.nm].qty+=nv(v.qty);dc2[v.nm].val+=nv(v.pr)*nv(v.qty);dc2[v.nm].ev++;});});
-    var nms2=Object.keys(dc2);
-    if(nms2.length>=2){
-      var avgs2=nms2.map(function(nm){return{nm:nm,avg:dc2[nm].qty/dc2[nm].ev,avgVal:dc2[nm].val/dc2[nm].ev};});
-      var totalAvg2=avgs2.reduce(function(s,x){return s+x.avg;},0)/avgs2.length;
-      var stars2=avgs2.filter(function(x){return x.avg>totalAvg2*2;}).sort(function(a,b){return b.avgVal-a.avgVal;});
-      var under2=avgs2.filter(function(x){return x.avg>0&&x.avg<totalAvg2*0.3;});
-      var activos2=PLATOS.filter(function(p){return p.on;});
-      var noVend2=activos2.filter(function(p){return nms2.indexOf(p.nm)<0;});
-      var highVal2=avgs2.slice().sort(function(a,b){return b.avgVal-a.avgVal;})[0];
-      var platoEstado2=under2.length>3||noVend2.length>5?'warn':'good';
-      var diagLines=[];
-      if(stars2.length)diagLines.push('⭐ Plato estrella: "'+esc(stars2[0].nm)+'" — '+stars2[0].avg.toFixed(1)+' unid/evento ('+Math.round(stars2[0].avg/totalAvg2*100)+'% sobre promedio)');
-      diagLines.push('💰 Mayor ingreso: "'+esc(highVal2.nm)+'" — '+S(Math.round(highVal2.avgVal))+'/evento en promedio');
-      if(under2.length)diagLines.push('📉 Bajo rendimiento ('+under2.length+'): '+under2.slice(0,2).map(function(x){return'"'+esc(x.nm)+'"';}).join(', ')+(under2.length>2?' y '+(under2.length-2)+' más':''));
-      if(noVend2.length)diagLines.push('💤 Sin ventas registradas: '+noVend2.slice(0,2).map(function(p){return'"'+esc(p.nm)+'"';}).join(', ')+(noVend2.length>2?' y '+(noVend2.length-2)+' más':''));
-      var recPlatos='';
-      if(stars2.length)recPlatos+='Potencia "'+esc(stars2[0].nm)+'": asegura stock suficiente y úsalo en toda la publicidad. ';
-      if(under2.length)recPlatos+=under2.length+' plato'+(under2.length>1?'s':'')+' con ventas muy bajas vs el promedio: evalúa promoción activa, ajuste de precio o retiro de carta. ';
-      if(noVend2.length>3)recPlatos+=noVend2.length+' platos sin ninguna venta — considera archivarlos para simplificar la carta y reducir stock innecesario.';
-      addRubro('🍽','Análisis de platos',platoEstado2,
-        nms2.length+' platos vendidos este mes',
-        diagLines.join(' | '),recPlatos);
+    var dc3={};rm.forEach(function(r){(r.ventas||[]).forEach(function(v){if(!dc3[v.nm])dc3[v.nm]={qty:0,val:0,ev:0};dc3[v.nm].qty+=nv(v.qty);dc3[v.nm].val+=nv(v.pr)*nv(v.qty);dc3[v.nm].ev++;});});
+    var n3=Object.keys(dc3);
+    if(n3.length>=2){
+      var av3=n3.map(function(nm){return{nm:nm,avg:dc3[nm].qty/dc3[nm].ev,avgV:dc3[nm].val/dc3[nm].ev};});
+      var tAvg=av3.reduce(function(s,x){return s+x.avg;},0)/av3.length;
+      var stars3=av3.filter(function(x){return x.avg>tAvg*2;}).sort(function(a,b){return b.avgV-a.avgV;});
+      var under3=av3.filter(function(x){return x.avg>0&&x.avg<tAvg*0.3;});
+      var act3=PLATOS.filter(function(p){return p.on;});
+      var nv3=act3.filter(function(p){return n3.indexOf(p.nm)<0;});
+      var hv3=av3.slice().sort(function(a,b){return b.avgV-a.avgV;})[0];
+      var lines3=[];
+      if(stars3.length)lines3.push('⭐ Estrella: "'+stars3[0].nm+'" ('+stars3[0].avg.toFixed(1)+' unid/ev, '+Math.round(stars3[0].avg/tAvg*100)+'% sobre promedio)');
+      lines3.push('💰 Mayor ingreso: "'+hv3.nm+'" ('+S(Math.round(hv3.avgV))+'/evento)');
+      if(under3.length)lines3.push('📉 Bajo rendimiento ('+under3.length+'): '+under3.slice(0,2).map(function(x){return'"'+x.nm+'"';}).join(', ')+(under3.length>2?' +más':''));
+      if(nv3.length)lines3.push('💤 Sin ventas ('+nv3.length+'): '+nv3.slice(0,2).map(function(p){return'"'+p.nm+'"';}).join(', ')+(nv3.length>2?' +más':''));
+      var rec3='';
+      if(stars3.length)rec3+='Potencia "'+stars3[0].nm+'": stock suficiente y presencia en publicidad. ';
+      if(under3.length)rec3+=under3.length+' plato'+(under3.length>1?'s':'')+' con ventas muy bajas: considera promoción activa, ajuste de precio o retiro de carta. ';
+      if(nv3.length>3)rec3+=nv3.length+' platos sin ninguna venta: evalúa archivarlos para simplificar la carta.';
+      add('🍽','Análisis de platos',under3.length>3||nv3.length>5?'warn':'good',n3.length+' platos vendidos',lines3.join(' | '),rec3);
     }
   }
 
-  // ── RUBRO 9: EFICIENCIA POR PERSONA ──
-  if(totalPersonas>0&&tot.ingT>0&&rm.length>0){
-    var ingPP=tot.ingT/totalPersonas;
-    var avgPers=Math.round(totalPersonas/rm.length);
-    var ppEstado=ingPP<30?'crit':ingPP<45?'warn':ingPP<=65?'good':'good';
-    var ppLabel=ingPP<30?'bajo':ingPP<45?'normal':ingPP<=65?'bueno':'excelente';
-    var ppDiag='Ingreso promedio de '+S(Math.round(ingPP))+' por persona atendida ('+avgPers+' pers/evento promedio). Ticket '+ppLabel+'.';
-    if(ingPP<30)ppDiag+=' El mínimo esperado para un Grill & Bar de esta categoría es S/30/persona.';
-    else if(ingPP<45)ppDiag+=' Hay oportunidad de subir el ticket promedio.';
-    else if(ingPP<=65)ppDiag+=' El cliente consume bien — mantén la calidad del servicio.';
-    else ppDiag+=' El cliente consume platos y cortes premium — excelente señal de posicionamiento.';
-    var ppRec=ingPP<30
-      ?'Para subir el ticket: (1) ofrecer entradas al llegar (S/5-8), (2) impulsar el bar activamente, (3) sugerir guarniciones adicionales. Un S/10 adicional por persona en un evento de '+avgPers+' personas son '+S(avgPers*10)+' más.'
-      :ingPP<45
-      ?'Para subir de S/'+Math.round(ingPP)+' a S/45 por persona en un evento de '+avgPers+' personas, necesitas '+S(Math.round((45-ingPP)*avgPers))+' adicionales. Estrategia: primera bebida + sugerencia de entrada al sentar.'
-      :'Mantén la calidad y el nivel de servicio que está generando este ticket. Asegura que el personal esté capacitado para sugerir los platos premium.';
-    addRubro('💰','Eficiencia por persona',ppEstado,
-      S(Math.round(ingPP))+'/persona ('+ppLabel+')',ppDiag,ppRec);
+  // 9. EFICIENCIA POR PERSONA
+  if(totalPersonas>0&&tot.ingT>0){
+    var ipp=tot.ingT/totalPersonas;var ap=Math.round(totalPersonas/Math.max(rm.length,1));
+    var ppes=ipp<30?'crit':ipp<45?'warn':ipp<=65?'good':'good';
+    var ppl=ipp<30?'bajo':ipp<45?'normal':ipp<=65?'bueno':'excelente';
+    var ppd='S/'+Math.round(ipp)+'/persona (ticket '+ppl+'). Promedio: '+ap+' personas/evento.';
+    if(ipp<30)ppd+=' Por debajo del mínimo esperado (S/30) para un Grill & Bar de esta categoría.';
+    else if(ipp<45)ppd+=' Oportunidad de subir el ticket promedio.';
+    else ppd+=' El cliente consume bien.';
+    var ppr=ipp<30?'Entradas al llegar (+S/5-8), bar activo, sugerencia de guarniciones. S/10 adicional por persona × '+ap+' pers = '+S(ap*10)+'/evento.':ipp<45?'Para llegar a S/45/persona en un evento de '+ap+' pers necesitas '+S(Math.round((45-ipp)*ap))+' más. Estrategia: primera bebida + sugerencia de entrada.':'Mantén la calidad y el nivel de servicio actual.';
+    add('💰','Eficiencia por persona',ppes,'S/'+Math.round(ipp)+'/persona ('+ppl+')',ppd,ppr);
   }
 
-  // ── RUBRO 10: STOCK Y RIESGO OPERATIVO ──
-  var stockCrit=STOCK.filter(function(s){
-    return RECETAS.some(function(r){return r.ing&&r.ing.some(function(i){return i.sid===s.id;});})&&nv(s.qty)===0;
-  });
-  var stockBajo2=STOCK.filter(function(s){return nv(s.qty)>0&&nv(s.qty)<=nv(s.min);});
-  if(stockCrit.length>0){
-    addRubro('📦','Stock — riesgo operativo','crit',
-      stockCrit.length+' insumo'+(stockCrit.length>1?'s':'')+' agotados con receta activa',
-      'Insumos en cero que tienen recetas definidas — no se pueden preparar esos platos: '+stockCrit.slice(0,3).map(function(s){return'"'+esc(s.nm)+'"';}).join(', ')+(stockCrit.length>3?' y '+(stockCrit.length-3)+' más':'')+'.',
-      'Compra urgente antes del próximo evento. Sin estos insumos no puedes ofrecer esos platos y perderás ventas.');
-  }else if(stockBajo2.length>0){
-    addRubro('📦','Stock — alertas',stockBajo2.length>3?'warn':'info',
-      stockBajo2.length+' producto'+(stockBajo2.length>1?'s':'')+' bajo el mínimo',
-      stockBajo2.slice(0,4).map(function(s){return esc(s.nm)+': '+nv(s.qty).toFixed(1)+'/'+nv(s.min)+' '+esc(s.u);}).join(' | ')+(stockBajo2.length>4?' (+'+(stockBajo2.length-4)+' más)':'')+'.',
-      'Planifica la compra antes del próximo evento. Revisa el stock 2-3 días antes de cada evento como rutina.');
-  }else if(STOCK.length>0){
-    addRubro('📦','Stock','good',
-      'Todo el inventario sobre el mínimo',
-      'Todos los productos registrados están por encima de su nivel mínimo de alerta.',
-      'Buen abastecimiento. Continúa revisando el stock 2-3 días antes de cada evento.');
-  }
+  // 10. STOCK
+  var sCrit=STOCK.filter(function(s){return RECETAS.some(function(r){return r.ing&&r.ing.some(function(i){return i.sid===s.id;});})&&nv(s.qty)===0;});
+  var sBaj=STOCK.filter(function(s){return nv(s.qty)>0&&nv(s.qty)<=nv(s.min);});
+  if(sCrit.length>0)add('📦','Stock — riesgo operativo','crit',sCrit.length+' insumo'+(sCrit.length!==1?'s':'')+' agotados con receta','Agotados con receta activa: '+sCrit.slice(0,3).map(function(s){return s.nm;}).join(', ')+(sCrit.length>3?' y más':'')+'.',  'Compra urgente antes del próximo evento. Sin estos insumos no puedes preparar esos platos.');
+  else if(sBaj.length>0)add('📦','Stock','warn',sBaj.length+' bajo mínimo',sBaj.slice(0,4).map(function(s){return s.nm+': '+nv(s.qty).toFixed(1)+'/'+nv(s.min)+' '+s.u;}).join(' | ')+(sBaj.length>4?' +más':'')+'.',  'Planifica la compra antes del próximo evento.');
+  else if(STOCK.length>0)add('📦','Stock','good','Todo sobre el mínimo','Todos los productos están por encima del nivel mínimo de alerta.','Continúa revisando el stock 2-3 días antes de cada evento como rutina.');
 
-  // ── RUBRO 11: CALENDARIO DE FECHAS ESPECIALES ──
-  var upcoming=getUpcomingDates(45);
-  if(upcoming.length>0){
-    var next=upcoming[0];
-    var calEstado3=next.dias<=7?'crit':next.dias<=21?'warn':'info';
-    var demandaLabel=['','demanda moderada','alta demanda','demanda máxima'][next.demanda]||'fecha especial';
-    addRubro('📅','Próxima fecha especial',calEstado3,
-      next.nm+' — en '+next.dias+' días ('+demandaLabel+')',
-      next.desc+(upcoming.length>1?' | También próximos: '+upcoming.slice(1,3).map(function(d){return d.nm+' ('+d.dias+' días)';}).join(', '):''),
-      next.dias<=7
-        ?'URGENTE: La fecha es en menos de una semana. Confirma el stock ahora, asegura el personal y publica en redes sociales HOY con la promoción del evento.'
-        :next.dias<=21
-        ?'Tienes '+next.dias+' días. Acciones: (1) Publica en redes sociales esta semana, (2) confirma el stock para mayor demanda, (3) evalúa si necesitas personal adicional.'
-        :'Aún hay '+Math.round(next.dias/7)+' semanas. Ideal para planificar el evento con anticipación, preparar promociones y reservar insumos clave.');
+  // 11. CALENDARIO
+  var upd=getUpcomingDates(45);
+  if(upd.length>0){
+    var nx=upd[0];
+    var cs=nx.dias<=7?'crit':nx.dias<=21?'warn':'info';
+    var demL=['','moderada','alta','máxima'][nx.demanda]||'especial';
+    var otrosStr=upd.length>1?' | Próximas: '+upd.slice(1,3).map(function(d){return d.nm+' ('+d.dias+'d)';}).join(', '):'';
+    add('📅','Próxima fecha especial',cs,nx.nm+' en '+nx.dias+' días (demanda '+demL+')',nx.desc+otrosStr,
+      nx.dias<=7?'URGENTE: Activa promoción en redes HOY. Confirma stock y personal.':nx.dias<=21?'Tienes '+nx.dias+' días. Publica en redes esta semana y ajusta el stock para mayor demanda.':'Planificación con '+Math.round(nx.dias/7)+' semanas de anticipación: promoción, stock y personal.');
   }
 
   // Sin datos
-  if(!rm.length&&!fij){
-    rubros=[{ico:'💡',nombre:'Sin datos del mes',estado:'info',
-      valor:'0 eventos registrados',
-      diag:'Cuando el administrador registre los eventos, aquí verás el análisis completo de los 11 rubros: rentabilidad, tendencia, proyección, bar, personal, cortesías, vales, platos, eficiencia, stock y calendario.',
-      rec:''}];
+  if(!rm.length&&!fij&&rubros.length===0){
+    add('💡','Sin datos del mes','info','0 eventos registrados','Cuando el administrador registre los eventos, verás aquí el análisis completo de los 11 rubros: rentabilidad, tendencia, proyección, bar, personal, cortesías, vales, platos, eficiencia, stock y calendario.','');
   }
+  return rubros;
+}
 
-  var estadoClass={crit:'crit',warn:'warn',good:'good',info:'info'};
-  var estadoColor={crit:'#B71C1C',warn:'#915000',good:'#1A6B1E',info:'#1A3FAB'};
-  var estadoDot={crit:'🔴',warn:'🟡',good:'🟢',info:'🔵'};
-
-  var html='<div class="card" style="margin-bottom:10px;">'+
-    '<div class="ch"><div class="ch-t">🧠 Análisis e inteligencia del negocio</div>'+
-    '<div class="ch-s">11 rubros evaluados · al '+esc(fechaCorte)+' · actualizado en tiempo real</div></div>'+
-    '<div class="cb" style="padding-top:8px;">';
-
-  rubros.forEach(function(r){
-    var cls=estadoClass[r.estado]||'info';
-    html+='<div class="ins '+cls+'" style="margin-bottom:10px;">'+
-      '<div class="ins-ico">'+r.ico+'</div>'+
-      '<div class="ins-body">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
-      '<div class="ins-t">'+esc(r.nombre)+'</div>'+
-      '<div style="font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;">'+estadoDot[r.estado]+' '+esc(r.valor)+'</div>'+
-      '</div>'+
-      '<div class="ins-d" style="margin-top:3px;">'+esc(r.diag)+'</div>'+
-      (r.rec?'<div class="ins-rec">→ '+esc(r.rec)+'</div>':'')+
-      '</div></div>';
-  });
-
-  html+='</div></div>';
-  q('d-insights').innerHTML=html;
+// renderInsights ahora solo coordina
+function renderInsights(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr){
+  // This function is now called internally by renderDash
+  // Kept for compatibility
 }
 
 
