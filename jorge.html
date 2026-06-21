@@ -764,13 +764,13 @@ function renderDash(){
     hbEl.innerHTML='<div class="cht"><div class="cht-hdr">'+
       '<div class="cht-ttl">🏆 Más vendidos</div>'+
       '<div class="tgg">'+
-      '<button class="tg '+(_chartTab==='food'?'on':'')+'" onclick="setChartTab('food')" data-tab="food">🍖 Comida</button>'+
-      '<button class="tg '+(_chartTab==='bar'?'on':'')+'" onclick="setChartTab('bar')" data-tab="bar">🍺 Bar</button>'+
-      '<button class="tg '+(_chartTab==='all'?'on':'')+'" onclick="setChartTab('all')" data-tab="all">Todo</button>'+
+      '<button class="tg '+(_chartTab==='food'?'on':'')+'" onclick="setChartTab(&apos;food&apos;)" data-tab="food">🍖 Comida</button>'+
+      '<button class="tg '+(_chartTab==='bar'?'on':'')+'" onclick="setChartTab(&apos;bar&apos;)" data-tab="bar">🍺 Bar</button>'+
+      '<button class="tg '+(_chartTab==='all'?'on':'')+'" onclick="setChartTab(&apos;all&apos;)" data-tab="all">Todo</button>'+
       '</div></div>'+
       '<div class="tgg" style="margin:0 14px 8px;background:var(--bg);padding:2px;border-radius:20px;">'+
-      '<button class="tg '+(_chartMode==='val'?'on':'')+'" onclick="setChartMode('val')" data-mode="val">S/ Ingreso</button>'+
-      '<button class="tg '+(_chartMode==='qty'?'on':'')+'" onclick="setChartMode('qty')" data-mode="qty">Cantidad</button>'+
+      '<button class="tg '+(_chartMode==='val'?'on':'')+'" onclick="setChartMode(&apos;val&apos;)" data-mode="val">S/ Ingreso</button>'+
+      '<button class="tg '+(_chartMode==='qty'?'on':'')+'" onclick="setChartMode(&apos;qty&apos;)" data-mode="qty">Cantidad</button>'+
       '</div>'+
       '<div class="hb-w" id="hb-inner"></div></div>';
     renderDishBars();
