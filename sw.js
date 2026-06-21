@@ -1,45 +1,41 @@
-// Sol de Huacariz — Service Worker
-// Cambia este número para forzar actualización en todos los dispositivos
-var VERSION = 'sdh-v3.1';
-var CACHE = VERSION;
+// Sol de Huacariz — Service Worker v3.2
+// Incrementar VERSION para forzar actualización en todos los dispositivos
+var VERSION = 'sdh-v3.2';
 
 self.addEventListener('install', function(e) {
-  self.skipWaiting();
+  // Activa inmediatamente sin esperar
+  e.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', function(e) {
+  // Elimina todos los cachés anteriores
   e.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(
-        keys.filter(function(k) { return k !== CACHE; })
-            .map(function(k) { return caches.delete(k); })
+        keys.map(function(k) { return caches.delete(k); })
       );
-    }).then(function() { return self.clients.claim(); })
+    }).then(function() {
+      return self.clients.claim();
+    }).then(function() {
+      // Recarga todos los clientes abiertos
+      return self.clients.matchAll({type:'window'});
+    }).then(function(clients) {
+      clients.forEach(function(client) {
+        client.postMessage({type:'SW_UPDATED'});
+      });
+    })
   );
 });
 
 self.addEventListener('fetch', function(e) {
-  // Para archivos HTML: siempre red primero, caché como fallback
-  if (e.request.mode === 'navigate' || e.request.url.endsWith('.html')) {
+  // Siempre red primero — nunca caché para HTML
+  if (e.request.url.endsWith('.html') || e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).then(function(r) {
-        var rc = r.clone();
-        caches.open(CACHE).then(function(c) { c.put(e.request, rc); });
-        return r;
-      }).catch(function() {
-        return caches.match(e.request);
-      })
+      fetch(e.request.url + '?v=' + VERSION, {cache:'no-store'})
+        .catch(function() { return caches.match(e.request); })
     );
     return;
   }
-  // Para otros recursos: caché primero
-  e.respondWith(
-    caches.match(e.request).then(function(r) {
-      return r || fetch(e.request).then(function(nr) {
-        var rc = nr.clone();
-        caches.open(CACHE).then(function(c) { c.put(e.request, rc); });
-        return nr;
-      });
-    })
-  );
+  // Para otros recursos: red primero
+  e.respondWith(fetch(e.request).catch(function() { return caches.match(e.request); }));
 });
