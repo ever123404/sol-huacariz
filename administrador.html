@@ -679,6 +679,53 @@ function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'bloc
 var _chartMode='val';
 var _chartData={dishes:[],trend:[]};
 
+
+// ══ CALENDARIO PERUANO ══
+var CAL_PE=[
+  {mes:1,dia:1,nm:'Año Nuevo',desc:'Familias celebran juntas. Alta demanda de almuerzos.',demanda:2},
+  {mes:2,dia:null,nm:'Carnaval de Cajamarca',desc:'El evento más importante del año en Cajamarca. Máxima afluencia de turistas y familias locales. Prepara el doble del stock habitual.',demanda:3},
+  {mes:3,dia:null,nm:'Semana Santa',desc:'Alta demanda familiar. Grupos visitan restaurantes campestres durante los feriados.',demanda:2},
+  {mes:5,dia:1,nm:'Día del Trabajo',desc:'Feriado nacional. Oportunidad para evento especial o almuerzo familiar.',demanda:2},
+  {mes:5,dia:null,nm:'Día de la Madre',desc:'El evento de mayor afluencia del año para restaurantes familiares. Capacidad máxima esperada (+200 personas).',demanda:3},
+  {mes:6,dia:null,nm:'Día del Padre',desc:'Segundo evento más importante del año. Alta afluencia familiar (90-120 personas estimadas).',demanda:2},
+  {mes:7,dia:28,nm:'Fiestas Patrias — 28 de julio',desc:'Feriado de alta demanda. Familias y grupos celebran la independencia.',demanda:2},
+  {mes:7,dia:29,nm:'Fiestas Patrias — 29 de julio',desc:'Segundo día feriado. Mantén stock para dos días consecutivos.',demanda:2},
+  {mes:8,dia:30,nm:'Santa Rosa de Lima',desc:'Feriado nacional.',demanda:1},
+  {mes:10,dia:8,nm:'Combate de Angamos',desc:'Feriado nacional.',demanda:1},
+  {mes:11,dia:1,nm:'Día de Todos los Santos',desc:'Feriado. Familias se reúnen — oportunidad para almuerzo especial.',demanda:1},
+  {mes:12,dia:8,nm:'Inmaculada Concepción',desc:'Feriado nacional.',demanda:1},
+  {mes:12,dia:25,nm:'Navidad',desc:'Alta demanda familiar. Cenas y almuerzos de celebración.',demanda:2},
+  {mes:12,dia:31,nm:'Fin de Año',desc:'Cenas de año nuevo. Considera servicio especial con reserva anticipada.',demanda:2}
+];
+
+function getUpcomingDates(days){
+  var now=new Date();var result=[];var year=now.getFullYear();
+  CAL_PE.forEach(function(f){
+    var dates=[];
+    if(f.dia){
+      dates.push(new Date(year,f.mes-1,f.dia));
+      dates.push(new Date(year+1,f.mes-1,f.dia));
+    }else{
+      if(f.nm.indexOf('Madre')>=0){
+        var d=new Date(year,4,1);while(d.getDay()!==0)d.setDate(d.getDate()+1);d.setDate(d.getDate()+7);dates.push(new Date(d));
+        d=new Date(year+1,4,1);while(d.getDay()!==0)d.setDate(d.getDate()+1);d.setDate(d.getDate()+7);dates.push(new Date(d));
+      }else if(f.nm.indexOf('Padre')>=0){
+        var d2=new Date(year,5,1);while(d2.getDay()!==0)d2.setDate(d2.getDate()+1);d2.setDate(d2.getDate()+14);dates.push(new Date(d2));
+        d2=new Date(year+1,5,1);while(d2.getDay()!==0)d2.setDate(d2.getDate()+1);d2.setDate(d2.getDate()+14);dates.push(new Date(d2));
+      }else if(f.nm.indexOf('Carnaval')>=0){
+        dates.push(new Date(year,1,15));dates.push(new Date(year+1,1,15));
+      }else if(f.nm.indexOf('Semana Santa')>=0){
+        dates.push(new Date(year,3,10));dates.push(new Date(year+1,3,10));
+      }
+    }
+    dates.forEach(function(d){
+      var diff=Math.ceil((d-now)/(1000*60*60*24));
+      if(diff>0&&diff<=days)result.push({nm:f.nm,dias:diff,desc:f.desc,demanda:f.demanda});
+    });
+  });
+  return result.sort(function(a,b){return a.dias-b.dias;});
+}
+
 function countWeekendsLeft(){
   var now=new Date();
   var last=new Date(now.getFullYear(),now.getMonth()+1,0);
