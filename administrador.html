@@ -678,6 +678,10 @@ function tog(id){var e=q(id);if(e)e.style.display=e.style.display==='none'?'bloc
 })();
 // CHART DATA STATE
 var _chartMode='val';
+var _chartTab='food'; // 'food' | 'bar' | 'all'
+var _chartData={dishes:[],drinks:[],all:[]};
+
+var _chartMode=_chartMode||'val';
 var _chartData={dishes:[],trend:[]};
 
 
@@ -802,19 +806,18 @@ function renderDash(){
     '<div class="sit-sub">'+esc(sit.sub)+'</div>'+
     '<div class="sit-rec">→ '+esc(sit.rec)+'</div></div>';
 
-  // ── 3 MÉTRICAS ──
+  // ── 3 MÉTRICAS: COMIDA | BAR | UTILIDAD ──
   var dm=q('d-metrics');
   if(!rm.length){
     dm.innerHTML='<div class="card"><div class="cb" style="text-align:center;color:var(--inks);font-size:13px;">Sin eventos registrados en '+MESESC[now.getMonth()]+'. El administrador registrará los eventos aquí.</div></div>';
   }else{
     var trendPct=totLm.ingT>0?Math.round((tot.ingT-totLm.ingT)/totLm.ingT*100):null;
-    var trendTxt=trendPct!==null?(trendPct>=0?'▲+':'▼')+trendPct+'% vs ant.':'';
+    var trendTxt=trendPct!==null?(trendPct>=0?'▲+':'▼')+Math.abs(trendPct)+'% vs ant.':'';
     dm.innerHTML='<div class="m3">'+
-      '<div class="m3c"><div class="m3l">Ingresos del mes</div><div class="m3v">'+S(tot.ingT).replace('S/ ','')+'</div><div class="m3s">S/ · '+rm.length+' evento'+(rm.length!==1?'s':'')+'</div></div>'+
-      '<div class="m3c '+(real>=0?'pos':'neg')+'"><div class="m3l">Utilidad real</div><div class="m3v">'+(real>=0?'':'-')+''+S(Math.abs(real)).replace('S/ ','')+'</div><div class="m3s">S/ · '+esc(trendTxt)+'</div></div>'+
-      '<div class="m3c"><div class="m3l">Bar del total</div><div class="m3v">'+Math.round(tot.ingT>0?tot.ingB/tot.ingT*100:0)+'%</div><div class="m3s">'+S(tot.ingB).replace('S/ ','')+' S/</div></div>'+
-      '</div>';
-  }
+      '<div class="m3c"><div class="m3l">🍖 Ingresos comida</div><div class="m3v">'+S(tot.ingC).replace('S/ ','')+'</div><div class="m3s">S/ · '+rm.length+' evento'+(rm.length!==1?'s':'')+'</div></div>'+
+      '<div class="m3c"><div class="m3l">🍺 Ingresos bar</div><div class="m3v">'+S(tot.ingB).replace('S/ ','')+'</div><div class="m3s">'+Math.round(tot.ingT>0?tot.ingB/tot.ingT*100:0)+'% del total</div></div>'+
+      '<div class="m3c '+(real>=0?'pos':'neg')+'"><div class="m3l">💰 Utilidad real</div><div class="m3v">'+(real>=0?'':'-')+S(Math.abs(real)).replace('S/ ','')+'</div><div class="m3s">S/ · '+esc(trendTxt)+'</div></div>'+
+      '</div>';}
 
   // ── GRÁFICA 1: TENDENCIA POR EVENTO ──
   var sortedAll=REG.slice().sort(function(a,b){return(a.fecha||'').localeCompare(b.fecha||'');});
@@ -851,49 +854,58 @@ function renderDash(){
     setTimeout(function(){document.querySelectorAll('.vb-bar[data-h]').forEach(function(el2){el2.style.height=el2.getAttribute('data-h');});},120);
   }else{vbEl.innerHTML='';}
 
-  // ── GRÁFICA 2: PLATOS MÁS VENDIDOS ──
+  // ── GRÁFICA 2: PLATOS Y BEBIDAS ──
+  // Build chart data
   var dc={};
-  rm.forEach(function(r){(r.ventas||[]).forEach(function(v){
-    if(!dc[v.nm])dc[v.nm]={qty:0,val:0};
-    dc[v.nm].qty+=nv(v.qty);dc[v.nm].val+=nv(v.pr)*nv(v.qty);
-  });});
-  _chartData.dishes=Object.keys(dc).map(function(nm){return{nm:nm,qty:dc[nm].qty,val:dc[nm].val};});
+  rm.forEach(function(r){
+    (r.ventas||[]).forEach(function(v){
+      if(!dc[v.nm])dc[v.nm]={qty:0,val:0,type:'food'};
+      dc[v.nm].qty+=nv(v.qty);dc[v.nm].val+=nv(v.pr)*nv(v.qty);
+    });
+    (r.bar||[]).forEach(function(v){
+      if(!dc[v.nm])dc[v.nm]={qty:0,val:0,type:'bar'};
+      dc[v.nm].qty+=nv(v.qty);dc[v.nm].val+=nv(v.pr)*nv(v.qty);
+    });
+  });
+  _chartData.dishes=Object.keys(dc).filter(function(k){return dc[k].type==='food';}).map(function(k){return{nm:k,qty:dc[k].qty,val:dc[k].val,type:'food'};});
+  _chartData.drinks=Object.keys(dc).filter(function(k){return dc[k].type==='bar';}).map(function(k){return{nm:k,qty:dc[k].qty,val:dc[k].val,type:'bar'};});
+  _chartData.all=Object.keys(dc).map(function(k){return{nm:k,qty:dc[k].qty,val:dc[k].val,type:dc[k].type};});
   var hbEl=q('d-dishes');
-  if(_chartData.dishes.length>0){
+  if(_chartData.all.length>0){
     hbEl.innerHTML='<div class="cht"><div class="cht-hdr">'+
-      '<div class="cht-ttl">🏆 Platos del mes</div>'+
+      '<div class="cht-ttl">🏆 Más vendidos</div>'+
       '<div class="tgg">'+
-      '<button class="tg '+(  _chartMode==='val'?'on':'')+'" onclick="setChartMode(\'val\')" data-mode="val">S/ Ingreso</button>'+
-      '<button class="tg '+(_chartMode==='qty'?'on':'')+'" onclick="setChartMode(\'qty\')" data-mode="qty">Cantidad</button>'+
-      '</div></div><div class="hb-w" id="hb-inner"></div></div>';
+      '<button class="tg '+(_chartTab==='food'?'on':'')+'" onclick="setChartTab('food')" data-tab="food">🍖 Comida</button>'+
+      '<button class="tg '+(_chartTab==='bar'?'on':'')+'" onclick="setChartTab('bar')" data-tab="bar">🍺 Bar</button>'+
+      '<button class="tg '+(_chartTab==='all'?'on':'')+'" onclick="setChartTab('all')" data-tab="all">Todo</button>'+
+      '</div></div>'+
+      '<div class="tgg" style="margin:0 14px 8px;background:var(--bg);padding:2px;border-radius:20px;">'+
+      '<button class="tg '+(_chartMode==='val'?'on':'')+'" onclick="setChartMode('val')" data-mode="val">S/ Ingreso</button>'+
+      '<button class="tg '+(_chartMode==='qty'?'on':'')+'" onclick="setChartMode('qty')" data-mode="qty">Cantidad</button>'+
+      '</div>'+
+      '<div class="hb-w" id="hb-inner"></div></div>';
     renderDishBars();
-  }else{
-    hbEl.innerHTML='';
-  }
+  }else{hbEl.innerHTML='';}
 
-  // ── ANÁLISIS ACORDEÓN ──
+  // ── ANÁLISIS ACORDEÓN — ORDENADO POR PRIORIDAD ──
   var rubros=buildRubros(rm,tot,real,fij,vPend,totLm,mes,daysLeft,dayOfMonth,daysInMonth,totalPersonas,rlm,lmStr);
+  // Sort: crit first, then warn, then info, then good
+  var priority={'crit':0,'warn':1,'info':2,'good':3};
+  rubros.sort(function(a,b){return (priority[a.estado]||2)-(priority[b.estado]||2);});
   var crit=rubros.filter(function(r){return r.estado==='crit';});
   var warn=rubros.filter(function(r){return r.estado==='warn';});
   var good=rubros.filter(function(r){return r.estado==='good';});
   var info=rubros.filter(function(r){return r.estado==='info';});
-  var metaStr=(crit.length?'<span style="color:var(--er);">🔴 '+crit.length+'</span> ':'')+
-              (warn.length?'<span style="color:#E65100;">🟡 '+warn.length+'</span> ':'')+
-              (good.length?'<span style="color:var(--ok);">🟢 '+good.length+'</span> ':'')+
-              (info.length?'<span style="color:#3563E9;">🔵 '+info.length+'</span>':'');
-
+  var metaStr=(crit.length?'<span style="color:#DC2626;font-weight:700;">🔴 '+crit.length+'</span> ':'')+
+              (warn.length?'<span style="color:#D97706;font-weight:700;">🟡 '+warn.length+'</span> ':'')+
+              (good.length?'<span style="color:#16A34A;font-weight:700;">🟢 '+good.length+'</span> ':'')+
+              (info.length?'<span style="color:#2563EB;font-weight:700;">🔵 '+info.length+'</span>':'');
   var accHtml='<div class="acc"><div class="acc-h" onclick="togAcc()">'+
     '<div><div class="acc-ht">🧠 Análisis del negocio</div>'+
-    '<div class="acc-meta" style="margin-top:2px;">'+metaStr+'</div></div>'+
-    '<div style="display:flex;align-items:center;gap:6px;">'+
-    '<div style="font-size:11px;color:var(--inks);" id="acc-lbl">Ver todo ▾</div></div></div>'+
+    '<div style="margin-top:3px;">'+metaStr+'</div></div>'+
+    '<div id="acc-lbl" style="font-size:11px;color:var(--inks);white-space:nowrap;">Ver todo ▾</div></div>'+
     '<div id="acc-body" style="display:none;"><div class="acc-b">';
-
-  // Always show crit+warn first
-  var priority=crit.concat(warn);
-  var rest=info.concat(good);
-
-  priority.concat(rest).forEach(function(r){
+  rubros.forEach(function(r){
     accHtml+='<div class="rub '+r.estado+'">'+
       '<div class="rub-ico">'+r.ico+'</div>'+
       '<div class="rub-bd">'+
@@ -905,8 +917,6 @@ function renderDash(){
   });
   accHtml+='</div></div></div>';
   q('d-insights').innerHTML=accHtml;
-
-  // Auto-expand if critical alerts exist
   if(crit.length>0)setTimeout(function(){togAcc(true);},200);
 
   // ── ÚLTIMO EVENTO ──
@@ -953,26 +963,30 @@ function togColl(id,btn){
   if(arr)arr.className='coll-a'+(open?' op':'');
 }
 
-function setChartMode(mode){
-  _chartMode=mode;
-  document.querySelectorAll('.tg').forEach(function(b){b.className='tg'+(b.getAttribute('data-mode')===mode?' on':'');});
+function setChartTab(tab){
+  _chartTab=tab;
+  document.querySelectorAll('.tg[data-tab]').forEach(function(b){b.className='tg'+(b.getAttribute('data-tab')===tab?' on':'');});
   renderDishBars();
 }
 
 function renderDishBars(){
   var el=q('hb-inner');if(!el)return;
-  var sorted=_chartData.dishes.slice().sort(function(a,b){return b[_chartMode]-a[_chartMode];}).slice(0,7);
-  var maxV=sorted.length?sorted[0][_chartMode]:1;
+  var src=_chartTab==='food'?_chartData.dishes:_chartTab==='bar'?_chartData.drinks:_chartData.all;
+  var sorted=src.slice().sort(function(a,b){return b[_chartMode]-a[_chartMode];}).slice(0,7);
+  if(!sorted.length){el.innerHTML='<div style="text-align:center;padding:16px;font-size:13px;color:var(--inks);">Sin datos para este período.</div>';return;}
+  var maxV=sorted[0][_chartMode]||1;
   var medals=['🥇','🥈','🥉','4°','5°','6°','7°'];
-  var colors=['#3B82F6','#F97316','#8B5CF6','#14B8A6','#EC4899','#22C55E','#EAB308'];
+  var foodColors=['#3B82F6','#8B5CF6','#14B8A6','#22C55E','#F97316','#EC4899','#EAB308'];
+  var barColors=['#F97316','#EAB308','#EC4899','#14B8A6','#8B5CF6','#3B82F6','#22C55E'];
   el.innerHTML=sorted.map(function(d,i){
     var v=d[_chartMode];
     var w=maxV>0?Math.round(v/maxV*100):0;
     var lbl=_chartMode==='val'?'S/'+Math.round(v):(Math.round(v)+' u');
+    var col=d.type==='bar'?barColors[i]:foodColors[i];
     return'<div class="hb-row">'+
       '<div class="hb-rk">'+medals[i]+'</div>'+
       '<div class="hb-lbl" title="'+esc(d.nm)+'">'+esc(d.nm)+'</div>'+
-      '<div class="hb-track"><div class="hb-bar" data-w="'+w+'%" style="background:'+colors[i]+'"></div></div>'+
+      '<div class="hb-track"><div class="hb-bar" data-w="'+w+'%" style="background:'+col+'"></div></div>'+
       '<div class="hb-val">'+lbl+'</div>'+
       '</div>';
   }).join('');
