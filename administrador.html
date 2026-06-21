@@ -963,6 +963,15 @@ function togColl(id,btn){
   if(arr)arr.className='coll-a'+(open?' op':'');
 }
 
+
+function setChartMode(mode){
+  _chartMode=mode;
+  document.querySelectorAll('.tg[data-mode]').forEach(function(b){
+    b.className='tg'+(b.getAttribute('data-mode')===mode?' on':'');
+  });
+  renderDishBars();
+}
+
 function setChartTab(tab){
   _chartTab=tab;
   document.querySelectorAll('.tg[data-tab]').forEach(function(b){b.className='tg'+(b.getAttribute('data-tab')===tab?' on':'');});
