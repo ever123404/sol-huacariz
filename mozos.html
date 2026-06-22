@@ -136,6 +136,7 @@ button{cursor:pointer;border:none;background:none;}
         <input type="password" id="l-pin" placeholder="••••" maxlength="4" inputmode="numeric">
       </div>
       <button class="lbtn" id="l-btn">Ingresar</button>
+      <div style="font-size:11.5px;color:var(--c1);text-align:center;margin-top:8px;font-weight:600;" id="l-info"></div>
       <div class="lerr" id="l-err"></div>
     </div>
   </div>
@@ -220,7 +221,7 @@ button{cursor:pointer;border:none;background:none;}
 var FB='https://sol-huacariz-default-rtdb.firebaseio.com';
 var curMesero='';
 var PLATOS=[],BAR=[],STOCK={};
-var qty={},bebs=[],cobroState={},motivos={},valNombres={};
+var qty={},bebs=[],cobroState={},motivos={},valNombres={},STOCK_ARR=[];
 var historial=[];
 
 var q=function(id){return document.getElementById(id);};
@@ -238,32 +239,46 @@ function fbPush(p,d){
 
 // ── LOGIN ──
 function loadMeseros(){
+  var sel=q('l-nombre');
+  sel.innerHTML='<option value="">Cargando...</option>';
+  sel.disabled=true;
   fbGet('meseros',function(data){
-    var sel=q('l-nombre');
-    if(!data||!Object.keys(data).length){
-      // Default meseros if none configured
-      data={'m1':{nombre:'Mozo 1',pin:'1234'},'m2':{nombre:'Mozo 2',pin:'1234'}};
+    var activos=[];
+    if(data){
+      // Handle both array and object formats from Firebase
+      var arr=Array.isArray(data)?data:Object.keys(data).map(function(k){return data[k];});
+      activos=arr.filter(function(m){return m&&m.nombre&&m.activo;});
+    }
+    if(!activos.length){
+      sel.innerHTML='<option value="">Sin mozos activos — avisar al administrador</option>';
+      q('l-err').textContent='No hay mozos activos. El administrador debe activarlos en Catálogo → Personal.';
+      sel.disabled=true;
+      return;
     }
     sel.innerHTML='<option value="">Selecciona tu nombre...</option>';
-    Object.keys(data).forEach(function(k){
-      var m=data[k];
+    activos.forEach(function(m){
       var o=document.createElement('option');
-      o.value=k+'|'+m.pin;
+      o.value=m.pin;
       o.textContent=m.nombre;
+      o.setAttribute('data-nombre',m.nombre);
       sel.appendChild(o);
     });
+    sel.disabled=false;
+    // Show active count
+    var info=q('l-info');
+    if(info)info.textContent=activos.length+' mozo'+(activos.length!==1?'s':'')+' activo'+(activos.length!==1?'s':'')+' en este evento';
   });
 }
 
 q('l-btn').addEventListener('click',function(){
-  var sel=q('l-nombre').value;
+  var sel=q('l-nombre');
   var pin=q('l-pin').value.trim();
   q('l-err').textContent='';
-  if(!sel){q('l-err').textContent='Selecciona tu nombre.';return;}
-  var parts=sel.split('|');
-  var nombre=q('l-nombre').options[q('l-nombre').selectedIndex].textContent;
-  var correctPin=parts[1];
-  if(pin!==correctPin){q('l-err').textContent='PIN incorrecto.';return;}
+  if(!sel.value){q('l-err').textContent='Selecciona tu nombre.';return;}
+  if(pin.length!==4){q('l-err').textContent='Ingresa tu PIN de 4 dígitos.';return;}
+  var correctPin=sel.value;
+  var nombre=sel.options[sel.selectedIndex].getAttribute('data-nombre')||sel.options[sel.selectedIndex].textContent;
+  if(pin!==correctPin){q('l-err').textContent='PIN incorrecto. Inténtalo de nuevo.';q('l-pin').value='';q('l-pin').focus();return;}
   curMesero=nombre;
   startApp();
 });
@@ -295,9 +310,8 @@ function loadCatalog(){
     fbGet('bar',function(db){
       BAR=Array.isArray(db)?db.filter(function(b){return b.on;}):[];
       fbGet('stock',function(ds){
-        // Build stock map by plato name
-        STOCK={};
-        if(Array.isArray(ds))ds.forEach(function(s){STOCK[s.id]=nv(s.qty);});
+        STOCK={};STOCK_ARR=[];
+        if(Array.isArray(ds)){ds.forEach(function(s){STOCK[s.id]=nv(s.qty);});STOCK_ARR=ds;}
         buildPlatosList();
         renderBebList();
       });
@@ -336,8 +350,29 @@ function buildPlatosList(){
 }
 
 function updStockDisplay(){
-  // Stock display based on stock data
-  // For now just check if items are marked as agotado in stock
+  // Check each plato against stock
+  // We use the plato's name to check stock via recipes
+  // For simple stock check: if a plato has stock tracking, show status
+  PLATOS.forEach(function(p){
+    var item=document.getElementById('pi-'+p.id);
+    if(!item)return;
+    item.classList.remove('agotado');
+    var stTag=document.getElementById('stk-'+p.id);
+    if(stTag)stTag.textContent='';
+    // Check stock array for items with same name
+    var stockItems=STOCK_ARR.filter(function(s){return s.nm&&s.nm.toLowerCase().indexOf(p.nm.toLowerCase().split(' ')[0])>=0;});
+    // Simple check: if any key ingredient is at 0, mark agotado
+    var agotado=stockItems.some(function(s){return nv(s.qty)===0&&nv(s.min)>0;});
+    var bajo=!agotado&&stockItems.some(function(s){return nv(s.qty)>0&&nv(s.qty)<=nv(s.min);});
+    if(agotado){
+      item.classList.add('agotado');
+      if(stTag){stTag.textContent='AGOTADO';stTag.className='plato-stock agotado-tag';}
+      qty[p.id]=0;
+      var el=document.getElementById('q-'+p.id);if(el){el.textContent='0';el.className='cval';}
+    }else if(bajo){
+      if(stTag){stTag.textContent='Stock bajo';stTag.className='plato-stock bajo';}
+    }
+  });
 }
 
 function chgQty(pid,d){

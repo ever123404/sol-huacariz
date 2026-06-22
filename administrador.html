@@ -467,7 +467,7 @@ var DPER=[
 ];
 
 // STATE
-var REG=[],FIJOS=[],VALES=[],APORTES=[],PLATOS=[],BAR=[],STOCK=[],RECETAS=[],PERSONAL=[];
+var REG=[],FIJOS=[],VALES=[],APORTES=[],MESEROS=[],PLATOS=[],BAR=[],STOCK=[],RECETAS=[],PERSONAL=[];
 var WV={},WS=0,WGastos=[],WPersonalEvento=[];
 
 // UTILS
@@ -579,6 +579,7 @@ function loadData(cb){
   fbGet('stock',function(d){STOCK=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DS));done.s=1;chk();});
   fbGet('recetas',function(d){RECETAS=Array.isArray(d)?d:[];done.re=1;chk();});
   fbGet('personal',function(d){PERSONAL=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DPER));done.pe=1;chk();});
+  fbGet('meseros',function(d){MESEROS=Array.isArray(d)?d:[];});
 }
 function renderAll(){renderDash();renderHist();renderVales();renderStock();if(ME.isAdmin)renderHoy();}
 
@@ -1916,23 +1917,38 @@ function removeIng(pnm,idx){
 // ══ PERSONAL ══
 function renderCatPersonal(){
   var el=q('cat-personal');if(!el)return;
-  var html='<div class="card" style="margin-bottom:10px;"><div class="sl">Registrar persona</div><div class="sb">'+
+  var html='';
+
+  // ── SECCIÓN MOZOS DEL EVENTO ──
+  html+='<div class="card" style="margin-bottom:10px;border:2px solid var(--c1);"><div class="sl">👨‍🍽️ Mozos del evento</div><div class="sb">'+
+    '<p style="font-size:12.5px;color:var(--inks);margin-bottom:10px;">Los mozos activos aparecerán en el login del app de mozos. Activa o desactiva según cuántos trabajarán en el evento.</p>'+
+    '<div id="mozos-lista"></div>'+
+    '<div style="margin-top:12px;border-top:.5px solid var(--bdr);padding-top:12px;">'+
+    '<div style="font-size:12px;font-weight:700;color:var(--inkm);margin-bottom:8px;">+ Agregar nuevo mozo</div>'+
+    '<div class="r3">'+
+    '<div class="field"><label class="fl">Nombre completo</label><input type="text" id="mz-nm" placeholder="Ej: Juan Quispe"></div>'+
+    '<div class="field"><label class="fl">PIN (4 dígitos)</label><input type="text" id="mz-pin" maxlength="4" inputmode="numeric" placeholder="1234"></div>'+
+    '<div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-p" onclick="saveMozo()" style="height:40px;font-size:13px;">+ Agregar</button></div>'+
+    '</div></div>'+
+    '</div></div>';
+
+  // ── PERSONAL GENERAL ──
+  html+='<div class="card" style="margin-bottom:10px;"><div class="sl">Registrar personal</div><div class="sb">'+
     '<div class="r2">'+
     '<div class="field"><label class="fl">Nombre completo</label><input type="text" id="pe-nm" placeholder="Ej: María López"></div>'+
     '<div class="field"><label class="fl">Rol / Cargo</label><input type="text" id="pe-rol" placeholder="Ej: Cocinera, Mozo, Músico..."></div></div>'+
     '<div class="r2">'+
     '<div class="field"><label class="fl">Tipo de pago</label>'+
     '<select id="pe-tipo">'+
-    '<option value="fijo-mensual">Fijo mensual — sueldo independiente de eventos</option>'+
-    '<option value="por-evento">Por evento — solo cuando trabaja</option>'+
+    '<option value="fijo-mensual">Fijo mensual</option>'+
+    '<option value="por-evento">Por evento</option>'+
     '<option value="por-hora">Por hora</option>'+
-    '<option value="contrato">Contrato único — músico, fotógrafo, etc.</option>'+
+    '<option value="contrato">Contrato único</option>'+
     '</select></div>'+
-    '<div class="field"><label class="fl" id="pe-monto-lbl">Monto (S/)</label><div class="pfx"><input type="number" id="pe-monto" min="0" step="1" inputmode="decimal" placeholder="0"></div></div></div>'+
-    '<div class="field"><label class="fl">Notas</label><input type="text" id="pe-notas" placeholder="Ej: trabaja solo fines de semana, incluye viáticos..."></div>'+
+    '<div class="field"><label class="fl">Monto (S/)</label><div class="pfx"><input type="number" id="pe-monto" min="0" step="1" inputmode="decimal" placeholder="0"></div></div></div>'+
+    '<div class="field"><label class="fl">Notas</label><input type="text" id="pe-notas" placeholder="Ej: trabaja solo fines de semana..."></div>'+
     '<button class="btn btn-p" onclick="savePersonal()">+ Registrar persona</button></div></div>';
 
-  // List by tipo
   var tipos=['fijo-mensual','por-evento','por-hora','contrato'];
   var tipoLabels={'fijo-mensual':'💼 Sueldo fijo mensual','por-evento':'📅 Pago por evento','por-hora':'⏱ Pago por hora','contrato':'📋 Contrato único'};
   tipos.forEach(function(tipo){
@@ -1944,15 +1960,69 @@ function renderCatPersonal(){
         '<div class="pn">'+esc(p.nombre)+(p.activo?'':'<span style="color:var(--inks);font-size:12px;"> · inactivo</span>')+'</div>'+
         '<div class="pr">'+esc(p.rol)+' · '+S(nv(p.monto))+(tipo==='fijo-mensual'?'/mes':tipo==='por-evento'?'/evento':tipo==='por-hora'?'/hora':' total')+(p.notas?' · '+esc(p.notas):'')+'</div></div>'+
         '<div class="ca">'+
-        '<button class="btn-g" onclick="editPersonal(\''+p.id+'\')" style="font-size:11px;padding:4px 8px;">Editar</button>'+
-        '<button class="btn-g" onclick="togPersonal(\''+p.id+'\')" style="font-size:11px;padding:4px 8px;">'+(p.activo?'Dar baja':'Activar')+'</button>'+
-        '<button class="btn-g del" onclick="delPersonal(\''+p.id+'\')" style="font-size:11px;padding:4px 8px;">✕</button>'+
+        '<button class="btn-g" onclick="editPersonal(''+p.id+'')" style="font-size:11px;padding:4px 8px;">Editar</button>'+
+        '<button class="btn-g" onclick="togPersonal(''+p.id+'')" style="font-size:11px;padding:4px 8px;">'+(p.activo?'Dar baja':'Activar')+'</button>'+
+        '<button class="btn-g del" onclick="delPersonal(''+p.id+'')" style="font-size:11px;padding:4px 8px;">✕</button>'+
         '</div></div>';
     });
     html+='</div></div>';
   });
-  if(!PERSONAL.length)html+='<div class="info">Aún no hay personal registrado. Agrega el administrador, cocinera y cualquier persona que trabaje en el negocio.</div>';
+  if(!PERSONAL.length)html+='<div class="info">Aún no hay personal registrado.</div>';
   el.innerHTML=html;
+  renderMozosLista();
+}
+
+function renderMozosLista(){
+  var el=q('mozos-lista');if(!el)return;
+  if(!MESEROS.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--inks);text-align:center;padding:8px;">Sin mozos registrados. Agrega el primero abajo.</div>';
+    return;
+  }
+  var activos=MESEROS.filter(function(m){return m.activo;}).length;
+  el.innerHTML='<div style="font-size:12px;color:var(--inks);margin-bottom:8px;">'+activos+' mozo'+(activos!==1?'s':'')+' activo'+(activos!==1?'s':'')+' de '+MESEROS.length+' registrados</div>'+
+    MESEROS.map(function(m,i){
+      return'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--bdr);">'+
+        '<div style="width:36px;height:36px;border-radius:50%;background:'+(m.activo?'var(--c1)':'#D1D5DB')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;">'+
+        esc(m.nombre.charAt(0).toUpperCase())+
+        '</div>'+
+        '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13.5px;font-weight:600;color:var(--ink);">'+esc(m.nombre)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--inks);">PIN: '+esc(m.pin||'----')+'  ·  '+(m.activo?'<span style="color:var(--ok);">✅ Activo en app</span>':'<span style="color:var(--inks);">⭕ Inactivo</span>')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        '<button class="btn-g '+(m.activo?'act':'')+'" onclick="togMozo('+i+')" style="font-size:12px;padding:5px 10px;">'+(m.activo?'Desactivar':'Activar')+'</button>'+
+        '<button class="btn-g del" onclick="delMozo('+i+')" style="font-size:12px;padding:5px 10px;">✕</button>'+
+        '</div></div>';
+    }).join('');
+}
+
+function saveMozo(){
+  var nm=(q('mz-nm').value||'').trim();
+  var pin=(q('mz-pin').value||'').trim();
+  if(!nm){alert('Ingresa el nombre del mozo.');return;}
+  if(pin.length!==4||isNaN(pin)){alert('El PIN debe ser de 4 dígitos numéricos.');return;}
+  // Check if PIN already exists
+  if(MESEROS.some(function(m){return m.pin===pin;})){alert('Ese PIN ya está en uso. Elige uno diferente.');return;}
+  MESEROS.push({id:uid(),nombre:nm,pin:pin,activo:true,por:ME.name,fecha:today()});
+  fbSet('meseros',MESEROS);
+  q('mz-nm').value='';q('mz-pin').value='';
+  renderMozosLista();
+  toast('✅ '+nm+' agregado al app de mozos');
+}
+
+function togMozo(i){
+  MESEROS[i].activo=!MESEROS[i].activo;
+  fbSet('meseros',MESEROS);
+  renderMozosLista();
+  var nm=MESEROS[i].nombre;
+  toast(MESEROS[i].activo?'✅ '+nm+' activado':'⭕ '+nm+' desactivado');
+}
+
+function delMozo(i){
+  if(!confirm('¿Eliminar a '+MESEROS[i].nombre+'?'))return;
+  MESEROS.splice(i,1);
+  fbSet('meseros',MESEROS);
+  renderMozosLista();
 }
 function savePersonal(){
   var nm=(q('pe-nm').value||'').trim(),rol=(q('pe-rol').value||'').trim(),tipo=q('pe-tipo').value,monto=nv(q('pe-monto').value),notas=(q('pe-notas').value||'').trim();
