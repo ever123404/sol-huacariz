@@ -46,6 +46,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 .tiempo.warn{background:#FEF3C7;color:#92400E;}
 .tiempo.urgent{background:#FEE2E2;color:#B91C1C;}
 </style>
+<link rel="manifest" href="./manifest-bar.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
 </head>
 <body>
 <header class="hdr">
@@ -131,9 +134,9 @@ function renderPedidos(pending){
       (c.notas?'<div class="notas">📝 '+esc(c.notas)+'</div>':'')+
       '</div>'+
       '<div class="card-actions">'+
-      (!isPrep?'<button class="btn-prep" onclick="marcar(''+k+'','preparando')">👨‍🍳 En preparación</button>':
+      (!isPrep?'<button class="btn-prep" data-key="'+k+'" data-act="preparando" onclick="marcarEv(this)">👨‍🍳 En preparación</button>':
                '<div style="flex:1;text-align:center;font-size:12px;color:#F59E0B;font-weight:700;">⏳ En preparación...</div>')+
-      '<button class="btn-listo" onclick="marcar(''+k+'','listo')">✅ Listo</button>'+
+      '<button class="btn-listo" data-key="'+k+'" data-act="listo" onclick="marcarEv(this)">✅ Listo</button>'+
       '</div></div>';
   });
   el.innerHTML=html;
@@ -144,6 +147,11 @@ function renderEmpty(){
   q('contador').textContent='0';
 }
 
+function marcarEv(btn){
+  var key=btn.getAttribute('data-key');
+  var act=btn.getAttribute('data-act');
+  if(key&&act)marcar(key,act);
+}
 function marcar(key,estado){
   fbGet('comandas/'+key,function(c){
     if(!c)return;

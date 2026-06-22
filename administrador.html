@@ -37,7 +37,7 @@ button{cursor:pointer;border:none;background:none;}
 .hdr{height:var(--hh);background:var(--c1);display:flex;align-items:center;justify-content:space-between;padding:0 14px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.22);}
 .hdr-l{display:flex;align-items:center;gap:8px;}
 .hdr-ic{width:24px;height:24px;border-radius:5px;display:block;}
-.hdr-t{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px;}
+.hdr-t{font-family:Fraunces,serif;font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px;}
 .hdr-u{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 11px 4px 5px;}
 .av{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
 .un{font-size:11.5px;font-weight:600;color:#fff;line-height:1;}
@@ -56,14 +56,14 @@ button{cursor:pointer;border:none;background:none;}
 .tb.on{color:var(--c1);border-top-color:var(--c1);}
 /* CARDS */
 .card{background:var(--sur);border-radius:var(--rb);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}
-.ch{padding:13px 14px 0;}.ch-t{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--ink);}
+.ch{padding:13px 14px 0;}.ch-t{font-family:Fraunces,serif;font-size:16px;font-weight:600;color:var(--ink);}
 .ch-s{font-size:12.5px;color:var(--inks);margin-top:1px;margin-bottom:2px;}
 .cb{padding:12px 14px 14px;}
 .sl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--c1);padding:11px 14px 8px;border-top:1px solid var(--bdr);}
 .sl:first-child{border-top:none;padding-top:13px;}
 .sb{padding:0 14px 13px;}
 /* PAGE HEADINGS */
-.pt{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.pt{font-family:Fraunces,serif;font-size:19px;font-weight:600;color:var(--ink);margin-bottom:2px;}
 .ps{font-size:13px;color:var(--inks);margin-bottom:12px;}
 /* METRICS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
@@ -1596,7 +1596,7 @@ function renderHoy(){
   var upcoming=getUpcomingDates(14);
 
   var el=q('panel-hoy');if(!el)return;
-  var html='<div style="font-size:19px;font-family:'Fraunces',serif;font-weight:600;color:var(--ink);">Panel del día</div>'+
+  var html='<div style="font-size:19px;font-family:Fraunces,serif;font-weight:600;color:var(--ink);">Panel del día</div>'+
     '<div style="font-size:12.5px;color:var(--inks);margin-bottom:12px;">'+fechaHoy+'</div>';
 
   // Alerta principal
