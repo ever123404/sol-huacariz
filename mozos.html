@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#7C2D12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mozos SH">
+<title>Mozos — Sol de Huacariz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#7C2D12;--c2:#92400E;--ok:#166534;--er:#B91C1C;--wa:#92400E;--bg:#FFF7ED;--sur:#fff;--ink:#1C0A00;--inkm:#431407;--inks:#9A3412;--bdr:rgba(124,45,18,.15);--sh:0 2px 8px rgba(124,45,18,.1);--r:10px;--rb:14px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font:inherit;color:inherit;}
+button{cursor:pointer;border:none;background:none;}
+/* LOGIN */
+#login{position:fixed;inset:0;background:linear-gradient(155deg,#450A00,#7C2D12,#92400E);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;}
+.lcard{background:#fff;border-radius:20px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4);}
+.ltop{background:linear-gradient(135deg,#7C2D12,#92400E);padding:28px 24px 22px;text-align:center;}
+.ltop h1{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:4px;}
+.ltop p{font-size:.75rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px;}
+.lbody{padding:24px;}
+.lf{margin-bottom:14px;}
+.lf label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--c1);margin-bottom:6px;}
+.lf select,.lf input{width:100%;height:48px;border:1.5px solid var(--bdr);border-radius:10px;padding:0 12px;font-size:.95rem;font-weight:600;background:#FFF7ED;-webkit-appearance:none;}
+.lf select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%237C2D12' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.lbtn{width:100%;height:50px;background:linear-gradient(135deg,#7C2D12,#B45309);color:#fff;border-radius:10px;font-size:1rem;font-weight:800;margin-top:4px;}
+.lerr{font-size:.8rem;font-weight:600;color:#B91C1C;text-align:center;margin-top:10px;min-height:18px;}
+/* APP */
+#app{display:none;position:fixed;inset:0;display:none;flex-direction:column;background:var(--bg);}
+.hdr{background:linear-gradient(135deg,var(--c1),var(--c2));padding:12px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hdr-l{display:flex;align-items:center;gap:8px;}
+.hdr-t{font-size:15px;font-weight:800;color:#fff;}
+.hdr-s{font-size:11px;color:rgba(255,255,255,.7);}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.mesero-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 10px 4px 5px;}
+.av{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.mesero-nm{font-size:11.5px;font-weight:700;color:#fff;}
+.btn-out{background:none;border:1px solid rgba(255,255,255,.3);border-radius:999px;color:rgba(255,255,255,.8);font-size:.65rem;font-weight:700;padding:4px 10px;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 13px 80px;}
+.scroll::-webkit-scrollbar{width:4px;}
+.scroll::-webkit-scrollbar-thumb{background:rgba(124,45,18,.3);border-radius:2px;}
+/* MESA */
+.mesa-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.mesa-row label{font-size:12.5px;font-weight:600;color:var(--inkm);white-space:nowrap;}
+.mesa-input{flex:1;height:44px;border:1.5px solid var(--bdr);border-radius:var(--r);padding:0 12px;font-size:15px;font-weight:700;background:var(--sur);text-align:center;}
+.mesa-input:focus{outline:none;border-color:var(--c1);}
+/* SECTION */
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--c1);margin:14px 0 8px;}
+/* PLATO ITEM */
+.plato-item{background:var(--sur);border-radius:var(--rb);box-shadow:var(--sh);margin-bottom:8px;overflow:hidden;}
+.plato-item.agotado{opacity:.4;pointer-events:none;}
+.plato-row{display:flex;align-items:center;padding:10px 12px;gap:10px;}
+.plato-info{flex:1;min-width:0;}
+.plato-nm{font-size:13.5px;font-weight:600;color:var(--ink);}
+.plato-desc{font-size:11.5px;color:var(--inks);margin-top:2px;line-height:1.4;}
+.plato-stock{display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:999px;margin-left:6px;}
+.plato-stock.bajo{background:#FEF3C7;color:#92400E;}
+.plato-stock.agotado-tag{background:#FEE2E2;color:#B91C1C;}
+.counter{display:flex;align-items:center;gap:2px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:999px;padding:2px;}
+.cbtn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--c1);}
+.cbtn:active{background:rgba(124,45,18,.1);}
+.cval{min-width:26px;text-align:center;font-size:14px;font-weight:800;color:var(--ink);}
+.cval.on{color:var(--c1);}
+/* ESTADO COBRO */
+.cobro-wrap{padding:6px 12px 10px;background:rgba(124,45,18,.04);}
+.cobro-lbl{font-size:11px;color:var(--inks);margin-bottom:5px;}
+.cobro-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.cbro{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;border:1.5px solid var(--bdr);background:var(--sur);color:var(--inks);cursor:pointer;}
+.cbro.cob{background:#DCFCE7;color:#166534;border-color:#166534;}
+.cbro.cor{background:#FEF3C7;color:#92400E;border-color:#D97706;}
+.cbro.val{background:#DBEAFE;color:#1E40AF;border-color:#3B82F6;}
+.cbro-extra{margin-top:6px;}
+.cbro-extra input{width:100%;border:1.5px solid var(--bdr);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--bg);}
+/* BEB */
+.beb-row{background:var(--sur);border-radius:var(--rb);border:1.5px solid var(--bdr);padding:10px 12px;margin-bottom:8px;}
+.beb-sel{width:100%;height:42px;border:1.5px solid var(--bdr);border-radius:8px;padding:0 10px;background:var(--bg);margin-bottom:8px;-webkit-appearance:none;font-weight:600;}
+.beb-bot{display:flex;align-items:center;gap:8px;}
+.beb-bot .counter{flex:1;}
+.beb-del{color:#B91C1C;font-size:.75rem;font-weight:700;padding:6px 8px;}
+.btn-add-beb{width:100%;height:40px;border:1.5px dashed rgba(124,45,18,.3);border-radius:var(--rb);color:var(--c1);font-size:.85rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;}
+/* NOTES */
+.notes-input{width:100%;min-height:70px;border:1.5px solid var(--bdr);border-radius:var(--rb);padding:10px 12px;font-size:.88rem;background:var(--sur);resize:none;line-height:1.5;}
+/* RESUMEN */
+.preview{background:#FFF7ED;border:1.5px solid var(--bdr);border-radius:var(--rb);padding:12px;font-size:.82rem;color:var(--inkm);line-height:1.8;display:none;}
+.preview.sh{display:block;}
+/* SEND BTN */
+.btn-send{width:100%;height:56px;background:linear-gradient(135deg,#7C2D12,#B45309);color:#fff;border-radius:var(--rb);font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;box-shadow:0 4px 16px rgba(124,45,18,.35);}
+.btn-send:disabled{background:#D1D5DB;box-shadow:none;}
+/* OVERLAY OK */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
+.ov.sh{opacity:1;pointer-events:all;}
+.ov-card{background:#fff;border-radius:20px;padding:28px 20px;width:90%;max-width:300px;text-align:center;}
+.ov-ico{font-size:48px;margin-bottom:8px;}
+.ov-t{font-size:1.1rem;font-weight:800;color:var(--c1);margin-bottom:4px;}
+.ov-s{font-size:.85rem;color:var(--inks);margin-bottom:16px;}
+.ov-close{background:var(--c1);color:#fff;border-radius:10px;padding:10px 24px;font-size:.95rem;font-weight:700;}
+/* HISTORIAL */
+.hist-item{background:var(--sur);border-radius:var(--r);box-shadow:var(--sh);padding:10px 12px;margin-bottom:8px;}
+.hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.hist-nm{font-size:13px;font-weight:700;color:var(--inkm);}
+.hist-hora{font-size:11px;color:var(--inks);}
+.hist-det{font-size:11.5px;color:var(--inks);line-height:1.5;}
+/* TABS */
+.tbr{height:58px;background:var(--sur);border-top:1px solid var(--bdr);display:flex;flex-shrink:0;}
+.tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--inks);font-size:10px;font-weight:500;border-top:2.5px solid transparent;}
+.tb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.tb.on{color:var(--c1);border-top-color:var(--c1);}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;background:var(--c1);color:#fff;z-index:999;pointer-events:none;animation:tin .2s ease;}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.err-msg{background:#FEE2E2;border:1.5px solid #FECACA;border-radius:var(--r);padding:10px 12px;color:#B91C1C;font-size:.85rem;font-weight:600;display:none;margin-bottom:10px;}
+.err-msg.sh{display:block;}
+#print-area{display:none;}
+@media print{body>*:not(#print-area){display:none!important;}#print-area{display:block!important;font-family:'Courier New',monospace;font-size:12px;width:56mm;margin:0 auto;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lcard">
+    <div class="ltop">
+      <h1>🍽 Sol de Huacariz</h1>
+      <p>Sistema de Comandas — Mozos</p>
+    </div>
+    <div class="lbody">
+      <div class="lf">
+        <label>Tu nombre</label>
+        <select id="l-nombre"><option value="">Cargando...</option></select>
+      </div>
+      <div class="lf">
+        <label>PIN de acceso</label>
+        <input type="password" id="l-pin" placeholder="••••" maxlength="4" inputmode="numeric">
+      </div>
+      <button class="lbtn" id="l-btn">Ingresar</button>
+      <div class="lerr" id="l-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;flex-direction:column;position:fixed;inset:0;">
+  <header class="hdr">
+    <div class="hdr-l">
+      <div>
+        <div class="hdr-t">Sol de Huacariz</div>
+        <div class="hdr-s" id="h-fecha"></div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <div class="mesero-chip">
+        <div class="av" id="h-av">?</div>
+        <span class="mesero-nm" id="h-nombre">Mozo</span>
+      </div>
+      <button class="btn-out" onclick="logout()">Salir</button>
+    </div>
+  </header>
+  <div class="scroll" id="main-scroll">
+
+    <!-- COMANDA TAB -->
+    <div id="pg-comanda">
+      <div class="mesa-row">
+        <label>Mesa(s):</label>
+        <input class="mesa-input" type="text" id="mesa-input" placeholder="Ej: 5" inputmode="numeric" autocomplete="off">
+      </div>
+
+      <div class="sec-title">🍖 Platos</div>
+      <div id="platos-list"></div>
+
+      <div class="sec-title">🍺 Bebidas</div>
+      <div id="bebidas-list"></div>
+      <button class="btn-add-beb" onclick="addBeb()">+ Agregar bebida</button>
+
+      <div class="sec-title">📝 Notas</div>
+      <textarea class="notes-input" id="notas-input" placeholder="Alergias, término de carne, indicaciones especiales..."></textarea>
+
+      <div class="preview" id="resumen-preview"></div>
+      <div class="err-msg" id="err-msg"></div>
+      <button class="btn-send" id="btn-enviar" onclick="enviarComanda()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar a Cocina y Bar
+      </button>
+    </div>
+
+    <!-- HISTORIAL TAB -->
+    <div id="pg-historial" style="display:none;">
+      <div style="font-size:19px;font-family:serif;font-weight:700;color:var(--inkm);margin-bottom:4px;">Mis comandas</div>
+      <div style="font-size:13px;color:var(--inks);margin-bottom:12px;">Comandas del turno actual.</div>
+      <div id="hist-list"></div>
+    </div>
+  </div>
+
+  <nav class="tbr">
+    <button class="tb on" id="tb-comanda" onclick="navM('comanda',this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Nueva comanda</span>
+    </button>
+    <button class="tb" id="tb-historial" onclick="navM('historial',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Mis comandas</span>
+    </button>
+  </nav>
+</div>
+
+<div class="ov" id="ov-ok">
+  <div class="ov-card">
+    <div class="ov-ico">✅</div>
+    <div class="ov-t">¡Enviado!</div>
+    <div class="ov-s" id="ov-detalle">Comanda enviada a cocina y bar.</div>
+    <button class="ov-close" onclick="closeOv()">Nueva comanda</button>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+var FB='https://sol-huacariz-default-rtdb.firebaseio.com';
+var curMesero='';
+var PLATOS=[],BAR=[],STOCK={};
+var qty={},bebs=[],cobroState={},motivos={},valNombres={};
+var historial=[];
+
+var q=function(id){return document.getElementById(id);};
+var nv=function(v){var n=parseFloat(v);return isFinite(n)?n:0;};
+var uid=function(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);};
+var esc=function(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+
+function fbGet(p,cb){fetch(FB+'/sdh/'+p+'.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){cb(d);}).catch(function(){cb(null);});}
+function fbSet(p,d){fetch(FB+'/sdh/'+p+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(function(){});}
+function fbPush(p,d){
+  var key=uid();
+  fetch(FB+'/sdh/'+p+'/'+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(function(){});
+  return key;
+}
+
+// ── LOGIN ──
+function loadMeseros(){
+  fbGet('meseros',function(data){
+    var sel=q('l-nombre');
+    if(!data||!Object.keys(data).length){
+      // Default meseros if none configured
+      data={'m1':{nombre:'Mozo 1',pin:'1234'},'m2':{nombre:'Mozo 2',pin:'1234'}};
+    }
+    sel.innerHTML='<option value="">Selecciona tu nombre...</option>';
+    Object.keys(data).forEach(function(k){
+      var m=data[k];
+      var o=document.createElement('option');
+      o.value=k+'|'+m.pin;
+      o.textContent=m.nombre;
+      sel.appendChild(o);
+    });
+  });
+}
+
+q('l-btn').addEventListener('click',function(){
+  var sel=q('l-nombre').value;
+  var pin=q('l-pin').value.trim();
+  q('l-err').textContent='';
+  if(!sel){q('l-err').textContent='Selecciona tu nombre.';return;}
+  var parts=sel.split('|');
+  var nombre=q('l-nombre').options[q('l-nombre').selectedIndex].textContent;
+  var correctPin=parts[1];
+  if(pin!==correctPin){q('l-err').textContent='PIN incorrecto.';return;}
+  curMesero=nombre;
+  startApp();
+});
+
+q('l-pin').addEventListener('keydown',function(e){if(e.key==='Enter')q('l-btn').click();});
+
+function startApp(){
+  q('login').style.display='none';
+  var appEl=q('app');appEl.style.display='flex';
+  q('h-nombre').textContent=curMesero;
+  q('h-av').textContent=curMesero.charAt(0).toUpperCase();
+  var now=new Date();
+  q('h-fecha').textContent=now.toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
+  loadCatalog();
+}
+
+function logout(){
+  curMesero='';
+  q('app').style.display='none';
+  q('login').style.display='flex';
+  q('l-pin').value='';
+  loadMeseros();
+}
+
+// ── CATÁLOGO ──
+function loadCatalog(){
+  fbGet('platos',function(d){
+    PLATOS=Array.isArray(d)?d.filter(function(p){return p.on;}):[];
+    fbGet('bar',function(db){
+      BAR=Array.isArray(db)?db.filter(function(b){return b.on;}):[];
+      fbGet('stock',function(ds){
+        // Build stock map by plato name
+        STOCK={};
+        if(Array.isArray(ds))ds.forEach(function(s){STOCK[s.id]=nv(s.qty);});
+        buildPlatosList();
+        renderBebList();
+      });
+    });
+  });
+  // Refresh stock every 30 seconds
+  setTimeout(function(){if(curMesero)loadCatalog();},30000);
+}
+
+function buildPlatosList(){
+  var el=q('platos-list');if(!el)return;
+  PLATOS.forEach(function(p){if(!qty[p.id])qty[p.id]=0;if(!cobroState[p.id])cobroState[p.id]='cob';});
+  var cats=[...new Set(PLATOS.map(function(p){return p.cat;}))];
+  var html='';
+  cats.forEach(function(cat){
+    var items=PLATOS.filter(function(p){return p.cat===cat;});
+    html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--c1);margin:8px 0 5px;">'+esc(cat)+'</div>';
+    items.forEach(function(p){
+      html+='<div class="plato-item" id="pi-'+p.id+'">'+
+        '<div class="plato-row">'+
+        '<div class="plato-info">'+
+        '<div class="plato-nm">'+esc(p.nm)+'<span class="plato-stock" id="stk-'+p.id+'"></span></div>'+
+        '<div class="plato-desc">'+(p.cat||'')+'</div>'+
+        '</div>'+
+        '<div class="counter">'+
+        '<button class="cbtn" onclick="chgQty(\''+p.id+'\',-1)">−</button>'+
+        '<span class="cval" id="q-'+p.id+'">0</span>'+
+        '<button class="cbtn" onclick="chgQty(\''+p.id+'\',1)">+</button>'+
+        '</div></div>'+
+        '<div id="cobro-'+p.id+'" style="display:none;"></div>'+
+        '</div>';
+    });
+  });
+  el.innerHTML=html;
+  updStockDisplay();
+}
+
+function updStockDisplay(){
+  // Stock display based on stock data
+  // For now just check if items are marked as agotado in stock
+}
+
+function chgQty(pid,d){
+  qty[pid]=Math.max(0,(qty[pid]||0)+d);
+  var el=q('q-'+pid);if(el){el.textContent=qty[pid];el.className='cval'+(qty[pid]>0?' on':'');}
+  var pi=q('pi-'+pid);if(pi)pi.style.background=qty[pid]>0?'rgba(124,45,18,.04)':'';
+  var cobroEl=q('cobro-'+pid);
+  if(cobroEl){
+    if(qty[pid]>0){
+      cobroEl.style.display='block';
+      renderCobroPanel(pid);
+    }else{
+      cobroEl.style.display='none';
+    }
+  }
+  updResumen();
+}
+
+function renderCobroPanel(pid){
+  var el=q('cobro-'+pid);if(!el)return;
+  var st=cobroState[pid]||'cob';
+  el.innerHTML='<div class="cobro-wrap">'+
+    '<div class="cobro-lbl">Estado de cobro:</div>'+
+    '<div class="cobro-btns">'+
+    '<button class="cbro'+(st==='cob'?' cob':'')+'" onclick="setCobro(\''+pid+'\',\'cob\')">✅ Cobrado</button>'+
+    '<button class="cbro'+(st==='cor'?' cor':'')+'" onclick="setCobro(\''+pid+'\',\'cor\')">🤝 Cortesía</button>'+
+    '<button class="cbro'+(st==='val'?' val':'')+'" onclick="setCobro(\''+pid+'\',\'val\')">📄 Vale</button>'+
+    '</div>'+
+    (st==='cor'?'<div class="cbro-extra"><input type="text" placeholder="Motivo obligatorio" value="'+(motivos[pid]||'')+'" oninput="motivos[\''+pid+'\']=this.value"></div>':'')+
+    (st==='val'?'<div class="cbro-extra"><input type="text" placeholder="Nombre del cliente" value="'+(valNombres[pid]||'')+'" oninput="valNombres[\''+pid+'\']=this.value"></div>':'')+
+    '</div>';
+}
+
+function setCobro(pid,st){cobroState[pid]=st;renderCobroPanel(pid);updResumen();}
+
+function renderBebList(){
+  var el=q('bebidas-list');if(!el)return;
+  if(!bebs.length){el.innerHTML='';return;}
+  el.innerHTML=bebs.map(function(b,i){
+    var barOpts=BAR.map(function(br){return'<option value="'+br.id+'" data-nm="'+esc(br.nm)+'"'+(b.id===br.id?' selected':'')+'>'+esc(br.nm)+'</option>';}).join('');
+    return'<div class="beb-row">'+
+      '<select class="beb-sel" onchange="updBeb('+i+',\'id\',this.value,this.options[this.selectedIndex].getAttribute(\'data-nm\'))">'+
+      '<option value="">— elige bebida —</option>'+barOpts+'</select>'+
+      '<div class="beb-bot">'+
+      '<div class="counter">'+
+      '<button class="cbtn" onclick="chgBeb('+i+',-1)">−</button>'+
+      '<span class="cval'+(b.qty>0?' on':'')+'">'+b.qty+'</span>'+
+      '<button class="cbtn" onclick="chgBeb('+i+',1)">+</button>'+
+      '</div>'+
+      '<button class="beb-del" onclick="delBeb('+i+')">✕ Quitar</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function addBeb(){bebs.push({id:'',nm:'',qty:1});renderBebList();updResumen();}
+function updBeb(i,k,v,nm){if(k==='id'){bebs[i].id=v;bebs[i].nm=nm||v;}renderBebList();updResumen();}
+function chgBeb(i,d){bebs[i].qty=Math.max(0,bebs[i].qty+d);if(bebs[i].qty===0)bebs.splice(i,1);renderBebList();updResumen();}
+function delBeb(i){bebs.splice(i,1);renderBebList();updResumen();}
+
+function updResumen(){
+  var lines=[];
+  PLATOS.forEach(function(p){
+    if((qty[p.id]||0)>0){
+      var st=cobroState[p.id]||'cob';
+      var tag=st==='cob'?'':st==='cor'?' 🤝':' 📄';
+      lines.push((qty[p.id]>1?qty[p.id]+'× ':'')+p.nm+tag);
+    }
+  });
+  bebs.filter(function(b){return b.id&&b.qty>0;}).forEach(function(b){
+    lines.push((b.qty>1?b.qty+'× ':'')+b.nm);
+  });
+  var prev=q('resumen-preview');
+  if(prev){
+    if(lines.length){prev.textContent=lines.join('\n');prev.className='preview sh';}
+    else{prev.className='preview';}
+  }
+}
+
+function enviarComanda(){
+  var mesa=q('mesa-input').value.trim();
+  var errEl=q('err-msg');errEl.className='err-msg';
+  if(!mesa){errEl.textContent='Ingresa el número de mesa.';errEl.className='err-msg sh';return;}
+  var platosArr=[];
+  PLATOS.forEach(function(p){
+    if((qty[p.id]||0)>0){
+      var st=cobroState[p.id]||'cob';
+      if(st==='cor'&&!(motivos[p.id]||'').trim()){
+        errEl.textContent='Ingresa el motivo de la cortesía: '+p.nm;
+        errEl.className='err-msg sh';return;
+      }
+      platosArr.push({nm:p.nm,cat:p.cat,qty:qty[p.id],st:st,mot:motivos[p.id]||'',vnm:valNombres[p.id]||''});
+    }
+  });
+  var bebsArr=bebs.filter(function(b){return b.id&&b.qty>0;}).map(function(b){return{nm:b.nm,qty:b.qty};});
+  if(!platosArr.length&&!bebsArr.length){errEl.textContent='Agrega al menos un plato o bebida.';errEl.className='err-msg sh';return;}
+
+  var now=new Date();
+  var comanda={
+    id:uid(),
+    fecha:now.toISOString().slice(0,10),
+    hora:now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}),
+    mesa:mesa,
+    mesero:curMesero,
+    platos:platosArr,
+    bebidas:bebsArr,
+    notas:q('notas-input').value.trim(),
+    estado_cocina:platosArr.length?'pendiente':'na',
+    estado_bar:bebsArr.length?'pendiente':'na',
+    estado_caja:'pendiente',
+    timestamp:Date.now()
+  };
+
+  q('btn-enviar').disabled=true;
+  // Save to Firebase
+  fbPush('comandas',comanda);
+
+  // Add to historial
+  historial.unshift(comanda);
+  rendHist();
+
+  // Show success overlay
+  var plStr=platosArr.map(function(p){return(p.qty>1?p.qty+'× ':'')+p.nm;}).join(', ');
+  var beStr=bebsArr.map(function(b){return(b.qty>1?b.qty+'× ':'')+b.nm;}).join(', ');
+  var det='Mesa '+mesa;
+  if(plStr)det+='\nCocina: '+plStr;
+  if(beStr)det+='\nBar: '+beStr;
+  q('ov-detalle').textContent=det;
+  q('ov-ok').className='ov sh';
+
+  // Reset
+  resetForm();
+  q('btn-enviar').disabled=false;
+}
+
+function resetForm(){
+  q('mesa-input').value='';
+  PLATOS.forEach(function(p){qty[p.id]=0;cobroState[p.id]='cob';motivos[p.id]='';valNombres[p.id]='';
+    var el=q('q-'+p.id);if(el){el.textContent='0';el.className='cval';}
+    var pi=q('pi-'+p.id);if(pi)pi.style.background='';
+    var co=q('cobro-'+p.id);if(co)co.style.display='none';
+  });
+  bebs=[];renderBebList();
+  q('notas-input').value='';
+  q('resumen-preview').className='preview';
+  q('err-msg').className='err-msg';
+  var ms=q('main-scroll');if(ms)ms.scrollTop=0;
+}
+
+function closeOv(){q('ov-ok').className='ov';}
+
+function rendHist(){
+  var el=q('hist-list');if(!el)return;
+  if(!historial.length){el.innerHTML='<div style="text-align:center;color:var(--inks);padding:24px;font-size:13px;">No hay comandas en este turno.</div>';return;}
+  el.innerHTML=historial.slice(0,10).map(function(c){
+    var plStr=(c.platos||[]).map(function(p){return(p.qty>1?p.qty+'× ':'')+p.nm;}).join(', ');
+    var beStr=(c.bebidas||[]).map(function(b){return(b.qty>1?b.qty+'× ':'')+b.nm;}).join(', ');
+    return'<div class="hist-item">'+
+      '<div class="hist-top"><span class="hist-nm">Mesa '+esc(c.mesa)+'</span><span class="hist-hora">'+esc(c.hora)+'</span></div>'+
+      (plStr?'<div class="hist-det">🍖 '+esc(plStr)+'</div>':'')+
+      (beStr?'<div class="hist-det">🍺 '+esc(beStr)+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+
+function navM(page,btn){
+  ['comanda','historial'].forEach(function(p){var el=q('pg-'+p);if(el)el.style.display=p===page?'block':'none';});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  if(page==='historial')rendHist();
+}
+
+// Init
+loadMeseros();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'SW_UPDATED') {
+      setTimeout(function() { window.location.reload(); }, 800);
+    }
+  });
+}
+</script>
+</body>
+</html>

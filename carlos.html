@@ -246,6 +246,16 @@ if ('serviceWorker' in navigator) {
       <div class="ps">Platos fiados pendientes de cobro.</div>
       <div id="vales-list"></div>
     </div>
+    <div id="pg-mes" class="page">
+  <div class="pt">Resumen mensual</div>
+  <div class="ps">Gastos fijos, aportes e ingresos del mes.</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <label class="fl" style="white-space:nowrap;margin:0;">Mes:</label>
+    <input type="month" id="mes-sel-ro" onchange="renderMesReadOnly()" style="flex:1;">
+  </div>
+  <div class="g2" id="mes-metrics-ro"></div>
+  <div class="card"><div class="ch"><div class="ch-t">🏢 Gastos fijos registrados</div><div class="ch-s">Solo el administrador puede modificar estos datos.</div></div><div class="cb"><div id="mes-gastos-ro"></div></div></div>
+</div>
     <div id="pg-stock" class="page">
       <div class="pt">Inventario de stock</div>
       <div class="ps">Semáforo de disponibilidad por producto.</div>
@@ -253,8 +263,22 @@ if ('serviceWorker' in navigator) {
     </div>
     
     
+      <div id="pg-cat" class="page">
+  <div class="pt">Catálogo</div>
+  <div class="ps">Vista de solo lectura. El administrador gestiona el catálogo.</div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:3px;">
+    <button class="btn-g act" id="ctab-platos-ro"   onclick="renderCatRO('platos')"   style="white-space:nowrap;">🍖 Platos</button>
+    <button class="btn-g"     id="ctab-bar-ro"      onclick="renderCatRO('bar')"      style="white-space:nowrap;">🍺 Bar</button>
+    <button class="btn-g"     id="ctab-stock-ro"    onclick="renderCatRO('stock')"    style="white-space:nowrap;">📦 Stock</button>
+    <button class="btn-g"     id="ctab-recetas-ro"  onclick="renderCatRO('recetas')"  style="white-space:nowrap;">📋 Recetas</button>
   </div>
-  <nav class="tbr"><button class="tb on" id="tb-dash" onclick="nav('dash',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button><button class="tb" id="tb-hist" onclick="nav('hist',this)"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Historial</span></button><button class="tb" id="tb-vales" onclick="nav('vales',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Vales</span></button><button class="tb" id="tb-stock" onclick="nav('stock',this)"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Stock</span></button></nav>
+  <div id="cat-platos-ro"></div>
+  <div id="cat-bar-ro"     style="display:none;"></div>
+  <div id="cat-stock-ro"   style="display:none;"></div>
+  <div id="cat-recetas-ro" style="display:none;"></div>
+</div>
+  </div>
+  <nav class="tbr"><button class="tb on" id="tb-dash" onclick="nav('dash',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button><button class="tb" id="tb-hist" onclick="nav('hist',this)"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Historial</span></button><button class="tb" id="tb-vales" onclick="nav('vales',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Vales</span></button><button class="tb" id="tb-mes" onclick="nav('mes',this)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Mes</span></button><button class="tb" id="tb-cat" onclick="nav('cat',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Catálogo</span></button><button class="tb" id="tb-stock" onclick="nav('stock',this)"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Stock</span></button></nav>
 </div>
 <div id="tw" style="position:fixed;top:60px;left:0;right:0;z-index:999;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;"></div>
 <script>
@@ -355,7 +379,7 @@ var DPER=[
 ];
 
 // STATE
-var REG=[],FIJOS=[],VALES=[],PLATOS=[],BAR=[],STOCK=[],RECETAS=[],PERSONAL=[];
+var REG=[],FIJOS=[],VALES=[],APORTES=[],APORTES=[],PLATOS=[],BAR=[],STOCK=[],RECETAS=[],PERSONAL=[];
 var WV={},WS=0,WGastos=[],WPersonalEvento=[];
 
 // UTILS
@@ -467,6 +491,8 @@ function loadData(cb){
   fbGet('stock',function(d){STOCK=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DS));done.s=1;chk();});
   fbGet('recetas',function(d){RECETAS=Array.isArray(d)?d:[];done.re=1;chk();});
   fbGet('personal',function(d){PERSONAL=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DPER));done.pe=1;chk();});
+  fbGet('aportes',function(d){APORTES=Array.isArray(d)?d:[];done.pe=1;chk();});
+  fbGet('aportes',function(d){APORTES=Array.isArray(d)?d:[];done.pe=1;chk();});
 }
 function renderAll(){renderDash();renderHist();renderVales();renderStock();}
 
@@ -478,6 +504,10 @@ function nav(pid,btn){
   if(btn)btn.classList.add('on');
   if(pid==='hist')renderHist();if(pid==='vales')renderVales();
   if(pid==='stock')renderStock();if(pid==='mes')renderMes();if(pid==='cat')renderCat('platos');
+  if(pid==='mes'&&!ME.isAdmin)renderMesReadOnly();
+  if(pid==='cat'&&!ME.isAdmin)renderCatRO('platos');
+  if(pid==='mes'&&!ME.isAdmin)renderMesReadOnly();
+  if(pid==='cat'&&!ME.isAdmin)renderCatRO('platos');
 }
 
 function toast(msg,type){
@@ -1298,6 +1328,224 @@ function renderShoppingCard(upcoming,rm){
   el.innerHTML=html;
 }
 
+
+// ══ APORTES DE SOCIOS ══
+var WAportes={ever:0,jorge:0,carlos:0};
+
+function renderWAportes(){
+  var el=q('wiz-aportes');if(!el)return;
+  var total=nv(WAportes.ever)+nv(WAportes.jorge)+nv(WAportes.carlos);
+  el.innerHTML='<div class="card" style="margin-bottom:10px;"><div class="sl">💰 Aportes de socios para este evento</div><div class="sb">'+
+    '<p style="font-size:12.5px;color:var(--inks);margin-bottom:10px;">Registra cuánto aportó cada socio para financiar este evento (insumos, gastos, etc.).</p>'+
+    '<div class="r3">'+
+    '<div class="field"><label class="fl">Ever (S/)</label><div class="pfx"><input type="number" id="ap-ever" min="0" step="1" inputmode="decimal" placeholder="0" value="'+WAportes.ever+'" oninput="WAportes.ever=nv(this.value);updAporteTotal()"></div></div>'+
+    '<div class="field"><label class="fl">Jorge (S/)</label><div class="pfx"><input type="number" id="ap-jorge" min="0" step="1" inputmode="decimal" placeholder="0" value="'+WAportes.jorge+'" oninput="WAportes.jorge=nv(this.value);updAporteTotal()"></div></div>'+
+    '<div class="field"><label class="fl">Carlos (S/)</label><div class="pfx"><input type="number" id="ap-carlos" min="0" step="1" inputmode="decimal" placeholder="0" value="'+WAportes.carlos+'" oninput="WAportes.carlos=nv(this.value);updAporteTotal()"></div></div>'+
+    '</div>'+
+    '<div id="ap-total" style="text-align:center;font-size:15px;font-weight:700;color:var(--c1);padding:8px;">Total aportado: '+S(total)+'</div>'+
+    '</div></div>';
+}
+
+function updAporteTotal(){
+  var t=nv(WAportes.ever)+nv(WAportes.jorge)+nv(WAportes.carlos);
+  var el=q('ap-total');if(el)el.textContent='Total aportado: '+S(t);
+}
+
+// ══ TRAZABILIDAD ══
+function renderTrazabilidad(limit){
+  var all=[];
+  REG.slice().forEach(function(r){all.push({ts:r.fecha,tipo:'📋 Evento registrado',detalle:esc(r.evento||'Evento')+' ('+S(calcReg(r).ingT)+')',por:esc(r.por||'?')});});
+  VALES.filter(function(v){return v.st==='cob';}).forEach(function(v){all.push({ts:v.fecha,tipo:'💰 Vale cobrado',detalle:esc(v.nombre)+' — '+S(nv(v.monto)),por:'Admin'});});
+  all.sort(function(a,b){return(b.ts||'').localeCompare(a.ts||'');});
+  if(limit)all=all.slice(0,limit);
+  if(!all.length)return'<div style="color:var(--inks);font-size:13px;text-align:center;padding:16px;">Sin actividad registrada aún.</div>';
+  return all.map(function(a){
+    return'<div class="dr"><span class="dl"><span style="margin-right:4px;">'+a.tipo+'</span>'+a.detalle+'</span>'+
+      '<span class="dv" style="font-size:11px;color:var(--inks);">'+esc(a.por)+'</span></div>';
+  }).join('');
+}
+
+// ══ MES READ-ONLY (socios) ══
+function renderMesReadOnly(){
+  var ms=q('mes-sel-ro');if(!ms)return;
+  var mes=ms.value||thisM();
+  var MESESC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var now=new Date();
+  var rm=REG.filter(function(r){return(r.fecha||'').slice(0,7)===mes;});
+  var tot={ingC:0,ingB:0,res:0};
+  rm.forEach(function(r){var c=calcReg(r);tot.ingC+=c.ingC;tot.ingB+=c.ingB;tot.res+=c.res;});
+  var fijArr=FIJOS.filter(function(f){return f.mes===mes;});
+  var fij=fijArr.reduce(function(s,f){return s+ftot(f);},0);
+  var real=tot.res-fij;
+  var ap=APORTES.filter(function(a){return(a.fecha||'').slice(0,7)===mes;});
+  var totalAp=ap.reduce(function(s,a){return s+nv(a.total);},0);
+  var mg=q('mes-metrics-ro');
+  if(mg){
+    mg.innerHTML=!rm.length?'<div class="mc s2"><div class="ml">Sin eventos en '+MESESC[parseInt(mes.split('-')[1])-1]+'</div></div>':
+      '<div class="mc"><div class="ml">🍖 Ingresos comida</div><div class="mv">'+S(tot.ingC)+'</div></div>'+
+      '<div class="mc"><div class="ml">🍺 Ingresos bar</div><div class="mv">'+S(tot.ingB)+'</div></div>'+
+      '<div class="mc s2 '+(real>=0?'gn':'rd')+'"><div class="ml">💰 Utilidad real</div><div class="mv">'+S(real)+'</div><div class="ms">Operativo '+S(tot.res)+' · Fijos '+S(fij)+'</div></div>'+
+      (totalAp>0?'<div class="mc s2 am"><div class="ml">💸 Aportes de socios este mes</div><div class="mv">'+S(totalAp)+'</div><div class="ms">Ever: '+S(ap.reduce(function(s,a){return s+nv(a.ever);},0))+' · Jorge: '+S(ap.reduce(function(s,a){return s+nv(a.jorge);},0))+' · Carlos: '+S(ap.reduce(function(s,a){return s+nv(a.carlos);},0))+'</div></div>':'');
+  }
+  // Gastos fijos detail
+  var gf=q('mes-gastos-ro');
+  if(gf){
+    if(!fijArr.length){gf.innerHTML='<div style="font-size:13px;color:var(--inks);padding:8px 0;">Sin gastos fijos registrados para '+MESESC[parseInt(mes.split('-')[1])-1]+'.</div>';return;}
+    gf.innerHTML=fijArr.map(function(f){
+      var pFijo=(f.personalFijo||[]).reduce(function(s,p){return s+nv(p.monto);},0);
+      var infra=nv(f.alquiler)+nv(f.servicios)+(f.extras||[]).reduce(function(s,e){return s+nv(e.monto);},0);
+      return'<div class="rec" style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;"><div>'+
+        '<div style="font-size:13.5px;font-weight:600;">'+fmtM(f.mes)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--inks);">Registrado por '+esc(f.por||'Administrador')+'</div></div>'+
+        '<span class="pill p-er">'+S(ftot(f))+'</span></div>'+
+        '<div style="padding:0 13px 11px;">'+
+        (pFijo>0?'<div class="dr"><span class="dl">Personal fijo mensual</span><span class="dv">'+S(pFijo)+'</span></div>':'')+
+        (nv(f.alquiler)>0?'<div class="dr"><span class="dl">Alquiler</span><span class="dv">'+S(nv(f.alquiler))+'</span></div>':'')+
+        (nv(f.servicios)>0?'<div class="dr"><span class="dl">Servicios</span><span class="dv">'+S(nv(f.servicios))+'</span></div>':'')+
+        (f.extras||[]).map(function(e){return'<div class="dr"><span class="dl">'+esc(e.desc)+'</span><span class="dv">'+S(nv(e.monto))+'</span></div>';}).join('')+
+        '<div class="dr" style="font-weight:700;border-top:1px solid var(--bdr);margin-top:4px;padding-top:6px;"><span class="dl">Total gastos fijos</span><span class="dv er">'+S(ftot(f))+'</span></div>'+
+        '</div></div>';
+    }).join('');
+  }
+}
+
+// ══ CATÁLOGO READ-ONLY (socios) ══
+function renderCatRO(tab){
+  ['platos-ro','bar-ro','stock-ro','recetas-ro'].forEach(function(t){
+    var e=q('cat-'+t);if(e)e.style.display=t.replace('-ro','')===tab?'block':'none';
+    var b=q('ctab-'+t);if(b)b.className='btn-g'+(t.replace('-ro','')===tab?' act':'');
+  });
+  if(tab==='platos')renderCatPlatosRO();
+  else if(tab==='bar')renderCatBarRO();
+  else if(tab==='stock')renderCatStockRO();
+  else renderCatRecetasRO();
+}
+
+function renderCatPlatosRO(){
+  var el=q('cat-platos-ro');if(!el)return;
+  var cats=[...new Set(PLATOS.map(function(p){return p.cat;}))];
+  var html='';
+  cats.forEach(function(cat){
+    var activos=PLATOS.filter(function(p){return p.cat===cat&&p.on;});
+    if(!activos.length)return;
+    html+='<div class="card" style="margin-bottom:9px;"><div class="cath">'+esc(cat)+'</div><div style="padding:0;">';
+    activos.forEach(function(p){
+      var hasRec=RECETAS.some(function(r){return r.nm===p.nm&&r.ing&&r.ing.length;});
+      html+='<div class="crow"><div class="ci"><div class="cn2">'+esc(p.nm)+'</div>'+
+        '<div class="cs">'+S(p.pr)+(hasRec?' · <span style="color:var(--ok)">✓ receta</span>':'')+'</div></div></div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html||'<div class="info">Sin platos en el catálogo.</div>';
+}
+
+function renderCatBarRO(){
+  var el=q('cat-bar-ro');if(!el)return;
+  var cats=[...new Set(BAR.map(function(b){return b.cat||'Otros';}))];
+  var html='';
+  cats.forEach(function(cat){
+    var activos=BAR.filter(function(b){return(b.cat||'Otros')===cat&&b.on;});
+    if(!activos.length)return;
+    html+='<div class="card" style="margin-bottom:9px;"><div class="cath">'+esc(cat)+'</div><div style="padding:0;">';
+    activos.forEach(function(b){
+      html+='<div class="crow"><div class="ci"><div class="cn2">'+esc(b.nm)+'</div>'+
+        '<div class="cs">'+S(b.pr)+' / '+esc(b.u||'unidad')+'</div></div></div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html||'<div class="info">Sin bebidas en el catálogo.</div>';
+}
+
+function renderCatStockRO(){
+  var el=q('cat-stock-ro');if(!el)return;
+  var cats=[...new Set(STOCK.map(function(s){return s.cat;}))];
+  var html='';
+  cats.forEach(function(cat){
+    html+='<div class="card" style="margin-bottom:9px;"><div class="cath">'+esc(cat)+'</div><div style="padding:0;">';
+    STOCK.filter(function(s){return s.cat===cat;}).forEach(function(s){
+      var qty=nv(s.qty),min=nv(s.min),cls=qty===0?'er':qty<=min?'wa':'ok';
+      html+='<div class="srow"><div class="sdot '+cls+'"></div><div class="sn">'+esc(s.nm)+'</div>'+
+        '<div class="sv">'+qty.toFixed(1)+' '+esc(s.u)+' / mín '+min+'</div></div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html||'<div class="info">Sin productos en el inventario.</div>';
+}
+
+function renderCatRecetasRO(){
+  var el=q('cat-recetas-ro');if(!el)return;
+  if(!RECETAS.length){el.innerHTML='<div class="info">No hay recetas definidas aún. El administrador las ingresará en Catálogo → Recetas.</div>';return;}
+  var html='<div class="info">Ingredientes por porción para cada plato. Solo el administrador puede modificar las recetas.</div>';
+  RECETAS.forEach(function(rec){
+    if(!rec.ing||!rec.ing.length)return;
+    var p=PLATOS.find(function(x){return x.nm===rec.nm;});
+    html+='<div class="card" style="margin-bottom:9px;"><div class="ch"><div class="ch-t">'+esc(rec.nm)+'</div>'+
+      (p?'<div class="ch-s">Precio de venta: '+S(nv(p.pr))+'</div>':'')+'</div><div class="cb">';
+    rec.ing.forEach(function(ing){
+      html+='<div class="dr"><span class="dl">'+esc(ing.nm)+'</span>'+
+        '<span class="dv">'+nv(ing.qty).toFixed(3)+' '+esc(ing.u)+'</span></div>';
+    });
+    var fc=p?calcFoodCostPct(rec.nm):null;
+    if(fc){
+      html+='<div class="dr" style="border-top:1px solid var(--bdr);margin-top:4px;padding-top:6px;">'+
+        '<span class="dl">Food cost</span>'+
+        '<span class="dv '+(fc.pct>35?'er':fc.pct>25?'wa':'ok')+'">'+Math.round(fc.pct)+'% ('+S(fc.costo)+')</span></div>';
+    }
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+// ══ ADMIN PANEL OPERATIVO ══
+function renderHoy(){
+  var mes=thisM();
+  var now=new Date();
+  var DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var fechaHoy=DIAS[now.getDay()]+', '+now.getDate()+' de '+MESES[now.getMonth()]+' de '+now.getFullYear();
+  var rm=REG.filter(function(r){return(r.fecha||'').slice(0,7)===mes;});
+  var hoy=REG.filter(function(r){return(r.fecha||'')===today();});
+  var pendVales=VALES.filter(function(v){return v.st!=='cob';});
+  var stockCrit=STOCK.filter(function(s){return nv(s.qty)<=nv(s.min);});
+  var fij=FIJOS.filter(function(f){return f.mes===mes;}).reduce(function(s,f){return s+ftot(f);},0);
+  var tot={ingT:0,res:0};rm.forEach(function(r){var c=calcReg(r);tot.ingT+=c.ingT;tot.res+=c.res;});
+  var real=tot.res-fij;
+  var upcoming=getUpcomingDates(14);
+
+  var el=q('panel-hoy');if(!el)return;
+  var html='<div style="font-size:19px;font-family:'Fraunces',serif;font-weight:600;color:var(--ink);">Panel del día</div>'+
+    '<div style="font-size:12.5px;color:var(--inks);margin-bottom:12px;">'+fechaHoy+'</div>';
+
+  // Alerta principal
+  if(upcoming.length>0&&upcoming[0].dias<=7){
+    var u=upcoming[0];
+    html+='<div class="sit '+(u.demanda>=2?'spec':'calm')+'" style="margin-bottom:12px;">'+
+      '<div class="sit-ttl">📅 '+esc(u.nm)+' — en '+u.dias+' día'+(u.dias!==1?'s':'')+'</div>'+
+      '<div class="sit-sub">'+esc(u.desc)+'</div>'+
+      '<div class="sit-rec">→ Confirma stock y personal esta semana</div></div>';
+  }
+
+  // Estado del día
+  html+='<div class="card" style="margin-bottom:10px;"><div class="ch"><div class="ch-t">📊 Estado de hoy</div></div><div class="cb">';
+  html+='<div class="dr"><span class="dl">Evento de hoy registrado</span><span class="dv '+(hoy.length?'ok':'er')+'">'+(hoy.length?'✅ Sí ('+hoy.length+')':'⚠️ No registrado aún')+'</span></div>';
+  html+='<div class="dr"><span class="dl">Vales pendientes de cobro</span><span class="dv '+(pendVales.length?'wa':'ok')+'">'+(pendVales.length?pendVales.length+' pendientes':'✅ Al día')+'</span></div>';
+  html+='<div class="dr"><span class="dl">Alertas de stock</span><span class="dv '+(stockCrit.length?'wa':'ok')+'">'+(stockCrit.length?stockCrit.length+' productos bajo mínimo':'✅ Todo OK')+'</span></div>';
+  html+='<div class="dr"><span class="dl">Resultado del mes</span><span class="dv '+(real>=0?'ok':'er')+'">'+S(real)+'</span></div>';
+  html+='</div></div>';
+
+  // Acciones rápidas
+  html+='<div class="card" style="margin-bottom:10px;"><div class="ch"><div class="ch-t">⚡ Acciones rápidas</div></div><div class="cb" style="display:flex;flex-direction:column;gap:8px;">';
+  html+='<button class="btn btn-p" onclick="nav('reg',q('tb-reg'))">✏️ Registrar evento de hoy</button>';
+  if(pendVales.length)html+='<button class="btn" style="background:#E65100;color:#fff;" onclick="nav('vales',q('tb-vales'))">📄 Cobrar '+pendVales.length+' vale'+(pendVales.length!==1?'s':'')+'</button>';
+  if(stockCrit.length)html+='<button class="btn" style="background:#1B3A5C;color:#fff;" onclick="nav('cat',q('tb-cat'));renderCat('stock')">📦 Actualizar stock ('+stockCrit.length+' alertas)</button>';
+  html+='</div></div>';
+
+  // Trazabilidad reciente
+  html+='<div class="card"><div class="ch"><div class="ch-t">🕐 Actividad reciente</div></div><div class="cb">'+renderTrazabilidad(8)+'</div></div>';
+
+  el.innerHTML=html;
+}
+
 // ══ HISTORIAL ══
 function renderHist(){
   var el=q('hist-list');if(!el)return;
@@ -1335,7 +1583,7 @@ function renderVales(){
   var html='';
   if(pend.length){
     html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--er);margin-bottom:8px;">Pendientes ('+pend.length+')</div>';
-    html+=pend.map(function(v){return'<div class="rec"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;"><div><div style="font-size:14px;font-weight:600;">'+esc(v.nombre)+'</div><div style="font-size:11.5px;color:var(--inks);">'+esc(v.plato)+' · '+fmtD(v.fecha)+'</div></div><div style="display:flex;align-items:center;gap:8px;"><span class="pill p-wa">'+S(nv(v.monto))+'</span>'+(ME.isAdmin?'<button class="btn-g act" onclick="cobrarVale(\''+v.id+'\')" style="font-size:12px;padding:5px 10px;">Cobrar</button>':'')+'</div></div></div>';}).join('');
+    html+=pend.map(function(v){return'<div class="rec"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;"><div><div style="font-size:14px;font-weight:600;">'+esc(v.nombre)+'</div><div style="font-size:11.5px;color:var(--inks);">'+esc(v.plato)+' · '+fmtD(v.fecha)+'</div></div><div style="display:flex;align-items:center;gap:8px;"><span class="pill p-wa">'+S(nv(v.monto))+'</span>'+'<button class="btn-g act" onclick="cobrarVale(\''+v.id+'\')" style="font-size:12px;padding:5px 10px;">Cobrar</button>'+'</div></div></div>';}).join('');
   }
   if(cob.length){html+='<hr><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ok);margin-bottom:8px;">Cobrados ('+cob.length+')</div>';html+=cob.map(function(v){return'<div class="rec"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;"><div><div style="font-size:14px;font-weight:500;color:var(--inks);">'+esc(v.nombre)+'</div><div style="font-size:11.5px;color:var(--inks);">'+esc(v.plato)+' · '+fmtD(v.fecha)+'</div></div><span class="pill p-ok">'+S(nv(v.monto))+'</span></div></div>';}).join('');}
   el.innerHTML=html;
@@ -1799,6 +2047,24 @@ function saveReg(){
     notas:q('r-nota').value.trim(),por:'Carlos'};
   REG.push(rec);fbSet('reg',REG);
   deductStock(ventas);
+  // Save aportes
+  if(WAportes.ever>0||WAportes.jorge>0||WAportes.carlos>0){
+    var apRec={id:uid(),fecha:fecha,evento_id:rec.id,
+      ever:WAportes.ever,jorge:WAportes.jorge,carlos:WAportes.carlos,
+      total:WAportes.ever+WAportes.jorge+WAportes.carlos,
+      concepto:'Aporte para evento: '+rec.evento,por:ME.name};
+    APORTES.push(apRec);fbSet('aportes',APORTES);
+  }
+  WAportes={ever:0,jorge:0,carlos:0};
+  // Save aportes
+  if(WAportes.ever>0||WAportes.jorge>0||WAportes.carlos>0){
+    var apRec={id:uid(),fecha:fecha,evento_id:rec.id,
+      ever:WAportes.ever,jorge:WAportes.jorge,carlos:WAportes.carlos,
+      total:WAportes.ever+WAportes.jorge+WAportes.carlos,
+      concepto:'Aporte para evento: '+rec.evento,por:ME.name};
+    APORTES.push(apRec);fbSet('aportes',APORTES);
+  }
+  WAportes={ever:0,jorge:0,carlos:0};
   WV={};WS=0;WGastos=[];WPersonalEvento=[];
   ['r-evento','r-com','r-mer','r-nota'].forEach(function(id){var e=q(id);if(e)e.value='';});
   if(q('r-fecha'))q('r-fecha').value=today();if(q('r-personas'))q('r-personas').value='';
@@ -1809,6 +2075,8 @@ function saveReg(){
 // INIT
 (function(){
   var fd=q('r-fecha');if(fd)fd.value=today();
+  var msro=q('mes-sel-ro');if(msro)msro.value=thisM();
+  var msro=q('mes-sel-ro');if(msro)msro.value=thisM();
   var ms=q('mes-sel');if(ms)ms.value=thisM();
   loadData(function(){renderAll();setInterval(function(){loadData(function(){renderAll();});},30000);});
 })();

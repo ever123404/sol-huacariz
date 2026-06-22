@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#6A1B9A">
+<title>Bar — Sol de Huacariz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#6A1B9A;--bg:#F0F4FF;--sur:#fff;--ink:#1E1B4B;--inks:#6B7280;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;}
+.hdr{background:var(--c1);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hdr-t{font-size:18px;font-weight:800;color:#fff;}
+.hdr-s{font-size:12px;color:rgba(255,255,255,.7);}
+.hdr-time{font-size:13px;font-weight:700;color:#fff;text-align:right;}
+.body{padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.card{background:var(--sur);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;border:2px solid transparent;transition:all .2s;}
+.card.urgente{border-color:#EF4444;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.08);}50%{box-shadow:0 0 0 4px rgba(239,68,68,.2);}}
+.card-top{background:#6A1B9A;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.card-mesa{font-size:20px;font-weight:900;color:#fff;}
+.card-hora{font-size:11.5px;color:rgba(255,255,255,.75);}
+.card-mesero{font-size:11.5px;color:rgba(255,255,255,.75);}
+.card-body{padding:12px 14px;}
+.item-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid #E5E7EB;font-size:13.5px;}
+.item-row:last-child{border-bottom:none;}
+.item-qty{background:#6A1B9A;color:#fff;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:800;flex-shrink:0;}
+.item-nm{flex:1;font-weight:500;}
+.item-st{font-size:10.5px;padding:1px 7px;border-radius:999px;flex-shrink:0;}
+.item-st.cob{background:#DCFCE7;color:#166534;}
+.item-st.cor{background:#FEF3C7;color:#92400E;}
+.item-st.val{background:#DBEAFE;color:#1E40AF;}
+.notas{font-size:12px;color:#6B7280;font-style:italic;padding:6px 0 0;}
+.card-actions{padding:10px 14px;border-top:1px solid #F3F4F6;display:flex;gap:8px;}
+.btn-prep{flex:1;background:#F59E0B;color:#fff;border-radius:8px;padding:8px;font-size:13px;font-weight:700;}
+.btn-listo{flex:1;background:#10B981;color:#fff;border-radius:8px;padding:8px;font-size:13px;font-weight:700;}
+.btn-listo:active,.btn-prep:active{opacity:.8;}
+.empty{text-align:center;padding:60px 20px;color:var(--inks);}
+.empty-ico{font-size:48px;margin-bottom:12px;}
+.empty h3{font-size:18px;font-weight:700;margin-bottom:8px;}
+.badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);color:#fff;border-radius:999px;min-width:24px;height:24px;font-size:13px;font-weight:800;padding:0 8px;margin-left:8px;}
+.tiempo{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;}
+.tiempo.ok{background:rgba(255,255,255,.2);color:#fff;}
+.tiempo.warn{background:#FEF3C7;color:#92400E;}
+.tiempo.urgent{background:#FEE2E2;color:#B91C1C;}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div>
+    <div class="hdr-t">🍺 Bar</div>
+    <div class="hdr-s">Pedidos de bebidas · Sol de Huacariz</div>
+  </div>
+  <div style="text-align:right;">
+    <div class="hdr-time" id="reloj"></div>
+    <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:2px;">
+      <div style="font-size:12px;color:rgba(255,255,255,.7);">Pendientes</div>
+      <span class="badge" id="contador">0</span>
+    </div>
+  </div>
+</header>
+<div class="body" id="pedidos-grid">
+  <div class="empty"><div class="empty-ico">🍺</div><h3>Sin pedidos pendientes</h3><p>Los pedidos aparecerán aquí en tiempo real.</p></div>
+</div>
+
+<script>
+var FB='https://sol-huacariz-default-rtdb.firebaseio.com';
+var COMANDAS={};
+var filter='bar';
+
+function fbGet(p,cb){fetch(FB+'/sdh/'+p+'.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){cb(d);}).catch(function(){cb(null);});}
+function fbSet(p,d){fetch(FB+'/sdh/'+p+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(function(){});}
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function loadPedidos(){
+  fbGet('comandas',function(data){
+    if(!data){renderEmpty();return;}
+    // Filter: only pending for this station
+    var pending=[];
+    Object.keys(data).forEach(function(k){
+      var c=data[k];
+      if(!c)return;
+      var estado=c['estado_bar'];
+      if((estado==='pendiente'||estado==='preparando')&&(c.bebidas&&c.bebidas.length)){
+        pending.push({key:k,data:c});
+      }
+    });
+    // Sort by timestamp
+    pending.sort(function(a,b){return(a.data.timestamp||0)-(b.data.timestamp||0);});
+    COMANDAS={};
+    pending.forEach(function(p){COMANDAS[p.key]=p.data;});
+    renderPedidos(pending);
+    q('contador').textContent=pending.length;
+  });
+}
+
+function renderPedidos(pending){
+  var el=q('pedidos-grid');
+  if(!pending.length){renderEmpty();return;}
+  var html='';
+  pending.forEach(function(item){
+    var c=item.data;var k=item.key;
+    var now=Date.now();
+    var mins=Math.floor((now-(c.timestamp||now))/60000);
+    var tiempoClass=mins<10?'ok':mins<20?'warn':'urgent';
+    var tiempoLabel=mins===0?'Ahora':mins===1?'1 min':mins+' min';
+    var isPrep=c['estado_bar']==='preparando';
+    var urgente=mins>=20;
+    var items=c.bebidas||[];
+    html+='<div class="card'+(urgente?' urgente':'')+'" id="card-'+k+'">'+
+      '<div class="card-top">'+
+      '<div>'+
+      '<div class="card-mesa">Mesa '+esc(c.mesa||'?')+'</div>'+
+      '<div class="card-mesero">'+esc(c.mesero||'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;">'+
+      '<span class="tiempo '+tiempoClass+'">'+tiempoLabel+'</span>'+
+      '<div class="card-hora">'+esc(c.hora||'')+'</div>'+
+      '</div></div>'+
+      '<div class="card-body">'+
+      items.filter(function(i){return i.nm;}).map(function(i){
+        return'<div class="item-row">'+
+          '<span class="item-qty">'+( i.qty>1?i.qty+'×':'1×')+'</span>'+
+          '<span class="item-nm">'+esc(i.nm)+'</span>'+
+          (i.st&&i.st!=='cob'?'<span class="item-st '+i.st+'">'+( i.st==='cor'?'Cortesía':'Vale')+'</span>':'')+
+          '</div>';
+      }).join('')+
+      (c.notas?'<div class="notas">📝 '+esc(c.notas)+'</div>':'')+
+      '</div>'+
+      '<div class="card-actions">'+
+      (!isPrep?'<button class="btn-prep" onclick="marcar(''+k+'','preparando')">👨‍🍳 En preparación</button>':
+               '<div style="flex:1;text-align:center;font-size:12px;color:#F59E0B;font-weight:700;">⏳ En preparación...</div>')+
+      '<button class="btn-listo" onclick="marcar(''+k+'','listo')">✅ Listo</button>'+
+      '</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+function renderEmpty(){
+  q('pedidos-grid').innerHTML='<div class="empty"><div class="empty-ico">🍺</div><h3>Sin pedidos pendientes</h3><p>Los pedidos de los mozos aparecerán aquí en tiempo real.</p></div>';
+  q('contador').textContent='0';
+}
+
+function marcar(key,estado){
+  fbGet('comandas/'+key,function(c){
+    if(!c)return;
+    c['estado_bar']=estado;
+    fbSet('comandas/'+key,c);
+    if(estado==='listo'){
+      var card=q('card-'+key);
+      if(card){card.style.opacity='0';card.style.transform='scale(.95)';card.style.transition='all .3s';setTimeout(function(){loadPedidos();},300);}
+    }else{
+      loadPedidos();
+    }
+  });
+}
+
+function q(id){return document.getElementById(id);}
+
+// Clock
+function updClock(){
+  var now=new Date();
+  q('reloj').textContent=now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updClock,1000);updClock();
+
+// Auto-refresh
+loadPedidos();
+setInterval(loadPedidos,5000);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'SW_UPDATED') {
+      setTimeout(function() { window.location.reload(); }, 800);
+    }
+  });
+}
+</script>
+</body>
+</html>

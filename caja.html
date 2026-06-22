@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#1B5E20">
+<title>Caja — Sol de Huacariz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#1B5E20;--c2:#2E7D32;--ok:#166534;--er:#B91C1C;--wa:#92400E;--bg:#F0FDF4;--sur:#fff;--ink:#1A2E1A;--inks:#4B7A4B;--bdr:rgba(27,94,32,.15);--sh:0 2px 8px rgba(27,94,32,.1);--r:10px;--rb:14px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);}
+button{cursor:pointer;border:none;background:none;font:inherit;color:inherit;}
+#app{display:flex;flex-direction:column;height:100%;}
+.hdr{background:linear-gradient(135deg,var(--c1),var(--c2));padding:12px 14px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hdr-t{font-size:16px;font-weight:800;color:#fff;}
+.hdr-s{font-size:11px;color:rgba(255,255,255,.7);}
+.hdr-time{font-size:14px;font-weight:700;color:#fff;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 13px 80px;}
+.scroll::-webkit-scrollbar{width:4px;}
+.scroll::-webkit-scrollbar-thumb{background:rgba(27,94,32,.3);border-radius:2px;}
+/* TABS */
+.tbr{height:58px;background:var(--sur);border-top:1px solid var(--bdr);display:flex;flex-shrink:0;}
+.tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--inks);font-size:10px;font-weight:500;border-top:2.5px solid transparent;}
+.tb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.tb.on{color:var(--c1);border-top-color:var(--c1);}
+/* MESA CARD */
+.mesa-card{background:var(--sur);border-radius:var(--rb);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;border-left:4px solid var(--c1);}
+.mesa-card.cobrado{border-left-color:#9CA3AF;opacity:.6;}
+.mesa-top{display:flex;justify-content:space-between;align-items:center;padding:11px 13px;}
+.mesa-nm{font-size:16px;font-weight:800;color:var(--ink);}
+.mesa-info{font-size:11.5px;color:var(--inks);margin-top:1px;}
+.mesa-total{font-size:18px;font-weight:900;color:var(--c1);}
+.mesa-items{padding:0 13px 10px;}
+.item-line{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:.5px solid var(--bdr);}
+.item-line:last-child{border-bottom:none;}
+.item-nm{color:var(--inks);}
+.item-pr{font-weight:600;font-variant-numeric:tabular-nums;}
+.mesa-actions{display:flex;gap:8px;padding:0 13px 12px;}
+.btn-cobrar{flex:1;height:44px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border-radius:var(--r);font-size:14px;font-weight:800;}
+.btn-cobrar.cobrado{background:#9CA3AF;}
+.btn-detalle{height:44px;padding:0 14px;border:1.5px solid var(--bdr);border-radius:var(--r);color:var(--inks);font-size:12.5px;font-weight:600;}
+/* RESUMEN */
+.resumen-card{background:linear-gradient(135deg,var(--c1),var(--c2));border-radius:var(--rb);padding:16px;margin-bottom:10px;color:#fff;}
+.res-title{font-size:13px;font-weight:700;opacity:.8;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.res-row{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.15);}
+.res-row:last-child{border-bottom:none;}
+.res-total{display:flex;justify-content:space-between;font-size:20px;font-weight:900;margin-top:10px;padding-top:10px;border-top:1.5px solid rgba(255,255,255,.3);}
+.empty{text-align:center;padding:48px 16px;color:var(--inks);}
+.empty-ico{font-size:40px;margin-bottom:8px;}
+/* MODAL COBRO */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;display:none;}
+.modal.sh{display:flex;}
+.modal-card{background:var(--sur);border-radius:20px;width:100%;max-width:320px;overflow:hidden;}
+.modal-top{background:var(--c1);padding:16px 18px;color:#fff;}
+.modal-t{font-size:15px;font-weight:800;}
+.modal-s{font-size:12px;opacity:.8;margin-top:2px;}
+.modal-body{padding:16px 18px;}
+.modal-total{text-align:center;font-size:28px;font-weight:900;color:var(--c1);margin:12px 0;}
+.modal-btns{display:flex;gap:8px;margin-top:12px;}
+.btn-confirm{flex:1;height:48px;background:var(--c1);color:#fff;border-radius:var(--r);font-size:14px;font-weight:800;}
+.btn-cancel{height:48px;padding:0 16px;border:1.5px solid var(--bdr);border-radius:var(--r);color:var(--inks);font-size:13px;font-weight:600;}
+.pay-method{display:flex;gap:8px;margin-bottom:12px;}
+.pm-btn{flex:1;height:38px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--inks);}
+.pm-btn.on{background:var(--c1);color:#fff;border-color:var(--c1);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hdr">
+    <div>
+      <div class="hdr-t">💰 Caja — Sol de Huacariz</div>
+      <div class="hdr-s" id="h-fecha"></div>
+    </div>
+    <div class="hdr-time" id="reloj"></div>
+  </header>
+  <div class="scroll" id="main-scroll">
+    <!-- MESAS TAB -->
+    <div id="pg-mesas">
+      <div style="font-size:19px;font-family:serif;font-weight:700;color:var(--ink);margin-bottom:4px;">Mesas abiertas</div>
+      <div style="font-size:13px;color:var(--inks);margin-bottom:12px;">Toca una mesa para cobrar.</div>
+      <div id="mesas-grid"></div>
+    </div>
+    <!-- CIERRE TAB -->
+    <div id="pg-cierre" style="display:none;">
+      <div style="font-size:19px;font-family:serif;font-weight:700;color:var(--ink);margin-bottom:4px;">Cierre del turno</div>
+      <div style="font-size:13px;color:var(--inks);margin-bottom:12px;">Resumen del turno actual.</div>
+      <div id="resumen-cierre"></div>
+    </div>
+  </div>
+  <nav class="tbr">
+    <button class="tb on" id="tb-mesas" onclick="navC('mesas',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Mesas</span>
+    </button>
+    <button class="tb" id="tb-cierre" onclick="navC('cierre',this)">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Cierre</span>
+    </button>
+  </nav>
+</div>
+
+<!-- MODAL COBRO -->
+<div class="modal" id="modal-cobro">
+  <div class="modal-card">
+    <div class="modal-top">
+      <div class="modal-t" id="modal-t">Cobrar Mesa 5</div>
+      <div class="modal-s" id="modal-s">Detalle del pedido</div>
+    </div>
+    <div class="modal-body">
+      <div id="modal-items"></div>
+      <div class="modal-total" id="modal-total">S/ 0.00</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--inks);margin-bottom:6px;">Método de pago:</div>
+      <div class="pay-method">
+        <button class="pm-btn on" id="pm-efectivo" onclick="selPago('efectivo')">💵 Efectivo</button>
+        <button class="pm-btn" id="pm-yape" onclick="selPago('yape')">📱 Yape/Plin</button>
+        <button class="pm-btn" id="pm-otro" onclick="selPago('otro')">💳 Otro</button>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-confirm" onclick="confirmarCobro()">✅ Confirmar cobro</button>
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var FB='https://sol-huacariz-default-rtdb.firebaseio.com';
+var mesaActual=null;var pagoMethod='efectivo';
+var cobrados=[];
+
+function q(id){return document.getElementById(id);}
+function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function nv(v){var n=parseFloat(v);return isFinite(n)?n:0;}
+function S(v){return 'S/ '+(isFinite(v)?v:0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function fbGet(p,cb){fetch(FB+'/sdh/'+p+'.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){cb(d);}).catch(function(){cb(null);});}
+function fbSet(p,d){fetch(FB+'/sdh/'+p+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(function(){});}
+
+// Load PLATOS prices for total calculation
+var PLATOS_PRICES={};
+function loadPrices(){
+  fbGet('platos',function(pl){
+    if(Array.isArray(pl))pl.forEach(function(p){PLATOS_PRICES[p.nm]=nv(p.pr);});
+    fbGet('bar',function(br){
+      if(Array.isArray(br))br.forEach(function(b){PLATOS_PRICES[b.nm]=nv(b.pr);});
+    });
+  });
+}
+
+function getTotal(c){
+  var total=0;
+  (c.platos||[]).forEach(function(p){
+    if(p.st==='cob'||!p.st)total+=nv(PLATOS_PRICES[p.nm]||0)*nv(p.qty);
+  });
+  (c.bebidas||[]).forEach(function(b){
+    total+=nv(PLATOS_PRICES[b.nm]||0)*nv(b.qty);
+  });
+  return total;
+}
+
+function loadMesas(){
+  fbGet('comandas',function(data){
+    if(!data){renderEmpty();return;}
+    // Group by mesa
+    var mesas={};
+    Object.keys(data).forEach(function(k){
+      var c=data[k];
+      if(!c)return;
+      if(c.estado_caja==='cobrado')return;
+      var mesa=c.mesa||'?';
+      if(!mesas[mesa])mesas[mesa]={comandas:[],mesero:c.mesero,primera_hora:c.hora};
+      mesas[mesa].comandas.push({key:k,data:c});
+    });
+    renderMesas(mesas);
+    renderCierre(data);
+  });
+}
+
+function renderMesas(mesas){
+  var el=q('mesas-grid');
+  var keys=Object.keys(mesas);
+  if(!keys.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">🏠</div><h3>Sin mesas abiertas</h3><p>Las mesas de los mozos aparecerán aquí.</p></div>';
+    return;
+  }
+  el.innerHTML=keys.map(function(mesa){
+    var m=mesas[mesa];
+    var total=0;
+    var allReady=m.comandas.every(function(c){
+      return c.data.estado_cocina==='listo'||c.data.estado_cocina==='na';
+    })&&m.comandas.every(function(c){
+      return c.data.estado_bar==='listo'||c.data.estado_bar==='na';
+    });
+    var items=[];
+    m.comandas.forEach(function(c){
+      (c.data.platos||[]).forEach(function(p){
+        if(p.st==='cob'||!p.st){
+          var pr=nv(PLATOS_PRICES[p.nm]||0);
+          var sub=pr*nv(p.qty);total+=sub;
+          items.push({nm:(p.qty>1?p.qty+'× ':'')+p.nm,pr:sub});
+        }
+      });
+      (c.data.bebidas||[]).forEach(function(b){
+        var pr=nv(PLATOS_PRICES[b.nm]||0);
+        var sub=pr*nv(b.qty);total+=sub;
+        items.push({nm:(b.qty>1?b.qty+'× ':'')+b.nm,pr:sub});
+      });
+    });
+    var estadoLbl=allReady?'<span style="color:#166534;font-weight:700;font-size:11px;">✅ Listo para cobrar</span>':'<span style="color:#D97706;font-size:11px;">⏳ En preparación</span>';
+    return'<div class="mesa-card" id="mc-'+esc(mesa)+'">'+
+      '<div class="mesa-top">'+
+      '<div>'+
+      '<div class="mesa-nm">Mesa '+esc(mesa)+'</div>'+
+      '<div class="mesa-info">'+esc(m.mesero||'')+'  ·  '+m.comandas.length+' comanda'+(m.comandas.length!==1?'s':'')+'  ·  '+estadoLbl+'</div>'+
+      '</div>'+
+      '<div class="mesa-total">'+S(total)+'</div>'+
+      '</div>'+
+      '<div class="mesa-items">'+
+      items.slice(0,4).map(function(it){return'<div class="item-line"><span class="item-nm">'+esc(it.nm)+'</span><span class="item-pr">'+(nv(it.pr)>0?S(it.pr):'—')+'</span></div>';}).join('')+
+      (items.length>4?'<div class="item-line"><span class="item-nm" style="color:var(--c1);">+ '+(items.length-4)+' más...</span></div>':'')+
+      '</div>'+
+      '<div class="mesa-actions">'+
+      '<button class="btn-cobrar" onclick="abrirCobro(\''+esc(mesa)+'\','+JSON.stringify(m).replace(/'/g,"\\'")+')">💰 Cobrar '+S(total)+'</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function renderEmpty(){q('mesas-grid').innerHTML='<div class="empty"><div class="empty-ico">🏠</div><h3>Sin mesas abiertas</h3><p>Las mesas de los mozos aparecerán aquí.</p></div>';}
+
+function abrirCobro(mesa,m){
+  mesaActual={mesa:mesa,m:m};
+  var total=0;var items=[];
+  m.comandas.forEach(function(c){
+    (c.data.platos||[]).forEach(function(p){
+      if(p.st==='cob'||!p.st){var pr=nv(PLATOS_PRICES[p.nm]||0);var sub=pr*nv(p.qty);total+=sub;items.push({nm:(p.qty>1?p.qty+'× ':'')+p.nm,pr:sub});}
+    });
+    (c.data.bebidas||[]).forEach(function(b){var pr=nv(PLATOS_PRICES[b.nm]||0);var sub=pr*nv(b.qty);total+=sub;items.push({nm:(b.qty>1?b.qty+'× ':'')+b.nm,pr:sub});});
+  });
+  q('modal-t').textContent='Cobrar Mesa '+mesa;
+  q('modal-s').textContent=items.length+' producto'+(items.length!==1?'s':\''');
+  q('modal-items').innerHTML=items.map(function(it){return'<div class="item-line"><span class="item-nm">'+esc(it.nm)+'</span><span class="item-pr">'+(nv(it.pr)>0?S(it.pr):'—')+'</span></div>';}).join('');
+  q('modal-total').textContent=S(total);
+  mesaActual.total=total;
+  pagoMethod='efectivo';
+  ['efectivo','yape','otro'].forEach(function(m){q('pm-'+m).className='pm-btn'+(m===pagoMethod?' on':'');});
+  q('modal-cobro').className='modal sh';
+}
+
+function selPago(m){pagoMethod=m;['efectivo','yape','otro'].forEach(function(x){q('pm-'+x).className='pm-btn'+(x===m?' on':'');});}
+
+function confirmarCobro(){
+  if(!mesaActual)return;
+  // Mark all comandas of this mesa as cobrado
+  var keys=mesaActual.m.comandas.map(function(c){return c.key;});
+  var done=0;
+  keys.forEach(function(k){
+    fbGet('comandas/'+k,function(c){
+      if(c){c.estado_caja='cobrado';c.metodo_pago=pagoMethod;c.cobrado_hora=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});fbSet('comandas/'+k,c);}
+      done++;if(done===keys.length){closeModal();loadMesas();}
+    });
+  });
+  cobrados.push({mesa:mesaActual.mesa,total:mesaActual.total,hora:new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}),metodo:pagoMethod});
+}
+
+function closeModal(){q('modal-cobro').className='modal';mesaActual=null;}
+
+function renderCierre(data){
+  var el=q('resumen-cierre');if(!el)return;
+  var cobradasMesas=[];var totalCobrado=0;
+  if(data)Object.keys(data).forEach(function(k){
+    var c=data[k];
+    if(c&&c.estado_caja==='cobrado'){
+      var sub=getTotal(c);
+      cobradasMesas.push({mesa:c.mesa,hora:c.cobrado_hora||c.hora,total:sub,metodo:c.metodo_pago||'efectivo'});
+      totalCobrado+=sub;
+    }
+  });
+  var byMetodo={efectivo:0,yape:0,otro:0};
+  cobradasMesas.forEach(function(m){byMetodo[m.metodo||'efectivo']+=m.total;});
+  if(!cobradasMesas.length){el.innerHTML='<div class="empty"><div class="empty-ico">📊</div><h3>Sin cobros en el turno</h3><p>Los cobros realizados aparecerán aquí.</p></div>';return;}
+  el.innerHTML='<div class="resumen-card">'+
+    '<div class="res-title">Resumen del turno</div>'+
+    '<div class="res-row"><span>💵 Efectivo</span><span>'+S(byMetodo.efectivo)+'</span></div>'+
+    '<div class="res-row"><span>📱 Yape/Plin</span><span>'+S(byMetodo.yape)+'</span></div>'+
+    '<div class="res-row"><span>💳 Otros</span><span>'+S(byMetodo.otro)+'</span></div>'+
+    '<div class="res-total"><span>Total cobrado</span><span>'+S(totalCobrado)+'</span></div>'+
+    '</div>'+
+    cobradasMesas.slice(-10).reverse().map(function(m){
+      return'<div style="background:var(--sur);border-radius:var(--r);box-shadow:var(--sh);padding:10px 13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">'+
+        '<div><div style="font-size:13.5px;font-weight:600;">Mesa '+esc(m.mesa)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--inks);">'+esc(m.hora)+'  ·  '+(m.metodo==='yape'?'📱':m.metodo==='otro'?'💳':'💵')+' '+esc(m.metodo)+'</div></div>'+
+        '<div style="font-size:16px;font-weight:800;color:var(--c1);">'+S(m.total)+'</div></div>';
+    }).join('');
+}
+
+function navC(page,btn){
+  ['mesas','cierre'].forEach(function(p){var el=q('pg-'+p);if(el)el.style.display=p===page?'block':'none';});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+}
+
+// Clock
+function updClock(){q('reloj').textContent=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});}
+setInterval(updClock,1000);updClock();
+q('h-fecha').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
+
+// Init
+loadPrices();
+loadMesas();
+setInterval(loadMesas,10000);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'SW_UPDATED') {
+      setTimeout(function() { window.location.reload(); }, 800);
+    }
+  });
+}
+</script>
+</body>
+</html>
