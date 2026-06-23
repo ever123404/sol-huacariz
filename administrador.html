@@ -1379,6 +1379,7 @@ function renderHoy(){
 }
 
 // ══ ADMIN: MOZO MANAGEMENT ══
+var GUARN=[];
 var MESEROS=[];
 function loadMeseros(cb){
   fbGet('meseros',function(d){MESEROS=Array.isArray(d)?d:[];if(cb)cb();});
@@ -1419,6 +1420,359 @@ function togMozo(i){
 function delMozo(i){
   if(!confirm('¿Eliminar a '+MESEROS[i].nombre+'?'))return;
   MESEROS.splice(i,1);fbSet('meseros',MESEROS);renderMozos();
+}
+
+// ══ MÓDULO ALERTAS WHATSAPP (CallMeBot) ══
+// sdh/alertas_config en Firebase
+var WA_CFG = {};
+
+function waLoadCfg(cb){
+  fbGet('alertas_config',function(d){
+    WA_CFG=d&&typeof d==='object'?d:{};
+    if(cb)cb();
+  });
+}
+
+function waSave(){
+  fbSet('alertas_config',WA_CFG);
+}
+
+function waSend(phone,apikey,msg,cb){
+  if(!phone||!apikey)return;
+  var url='https://api.callmebot.com/whatsapp.php?phone='+
+    encodeURIComponent(phone)+'&text='+encodeURIComponent(msg)+'&apikey='+apikey;
+  fetch(url).then(function(r){if(cb)cb(r.ok);}).catch(function(){if(cb)cb(false);});
+}
+
+function waSendAll(msg,key){
+  // Send to all active socios
+  var socios=['ever','jorge','carlos'];
+  var sent=0;
+  socios.forEach(function(s){
+    var cfg=WA_CFG[s];
+    if(!cfg||!cfg.phone||!cfg.apikey||!cfg.activo)return;
+    waSend(cfg.phone,cfg.apikey,msg);sent++;
+  });
+  // Mark as sent today in Firebase
+  if(sent>0){
+    if(!WA_CFG.last_sent)WA_CFG.last_sent={};
+    WA_CFG.last_sent[key]=today();
+    waSave();
+  }
+  return sent;
+}
+
+function waAlreadySent(key){
+  return WA_CFG.last_sent&&WA_CFG.last_sent[key]===today();
+}
+
+function waCheck(rm,tot,real,fij,stockArr,valesArr){
+  if(!WA_CFG||!Object.keys(WA_CFG).length)return;
+
+  // ── ALERTA 1: Mes en negativo ──
+  if(real<0&&fij>0&&!waAlreadySent('mes_neg')){
+    var msg='🚨 *Sol de Huacariz — Mes en negativo*\n'+
+      'Pérdida actual: S/ '+Math.abs(real).toFixed(2)+'\n'+
+      'Operativo: S/ '+tot.res.toFixed(2)+'\n'+
+      'Gastos fijos: S/ '+fij.toFixed(2)+'\n'+
+      '→ Acción requerida antes del próximo evento.';
+    waSendAll(msg,'mes_neg');
+  }
+
+  // ── ALERTA 2: Stock crítico (productos con receta en cero) ──
+  if(!waAlreadySent('stock_crit')){
+    var criticos=(stockArr||STOCK).filter(function(s){
+      return nv(s.qty)===0&&nv(s.min)>0;
+    });
+    if(criticos.length>0){
+      var msg2='📦 *Sol de Huacariz — Stock crítico*\n'+
+        criticos.slice(0,6).map(function(s){return '• '+s.nm+': 0 '+s.u;}).join('\n')+
+        (criticos.length>6?'\n• ... y '+(criticos.length-6)+' más':'')+
+        '\n→ Comprar antes del próximo evento.';
+      waSendAll(msg2,'stock_crit');
+    }
+  }
+
+  // ── ALERTA 3: Vales sin cobrar +14 días ──
+  if(!waAlreadySent('vales_old')){
+    var viejos=(valesArr||VALES).filter(function(v){
+      if(v.st==='cob')return false;
+      var dias=Math.floor((new Date()-new Date(v.fecha||today()))/(1000*60*60*24));
+      return dias>14;
+    });
+    if(viejos.length>0){
+      var total=viejos.reduce(function(s,v){return s+nv(v.monto);},0);
+      var msg3='📄 *Sol de Huacariz — Vales sin cobrar (+14 días)*\n'+
+        viejos.slice(0,5).map(function(v){
+          var dias2=Math.floor((new Date()-new Date(v.fecha||today()))/(1000*60*60*24));
+          return '• '+v.nombre+': S/ '+nv(v.monto).toFixed(2)+' ('+dias2+' días)';
+        }).join('\n')+
+        '\nTotal: S/ '+total.toFixed(2)+
+        '\n→ Cobrar antes del próximo evento.';
+      waSendAll(msg3,'vales_old');
+    }
+  }
+
+  // ── ALERTA 4: Evento del día no registrado (después de las 8pm) ──
+  var hora=new Date().getHours();
+  var diaSemana=new Date().getDay(); // 0=dom, 5=vie, 6=sab
+  var esDiaEvento=(diaSemana===0||diaSemana===5||diaSemana===6);
+  var hayEvento=(rm||REG).some(function(r){return(r.fecha||'')===today();});
+  if(esDiaEvento&&hora>=20&&!hayEvento&&!waAlreadySent('no_reg')){
+    var msg4='📋 *Sol de Huacariz — Evento de hoy sin registrar*\n'+
+      'Son las '+hora+':'+String(new Date().getMinutes()).padStart(2,'0')+' y no se ha registrado el evento de hoy.\n'+
+      '→ El administrador o un socio debe ingresar las ventas del día.';
+    waSendAll(msg4,'no_reg');
+  }
+}
+
+// ── UI: CONFIGURAR ALERTAS ──
+function renderWAPanel(){
+  var el=q('wa-panel');if(!el)return;
+  var socios=[
+    {key:'ever',  label:'Ever',   icon:'🟢'},
+    {key:'jorge', label:'Jorge',  icon:'🔵'},
+    {key:'carlos',label:'Carlos', icon:'🟡'},
+  ];
+  var html='<div class="card" style="margin-bottom:10px;">'+
+    '<div class="ch"><div class="ch-t fnt">🔔 Alertas WhatsApp</div>'+
+    '<div class="ch-s">Envío automático cuando hay alertas críticas.</div></div>'+
+    '<div class="cb">';
+
+  html+='<div style="background:var(--bg);border-radius:9px;padding:10px;margin-bottom:12px;font-size:12.5px;color:var(--inkm);">'+
+    '<strong>Configuración inicial (1 vez por persona):</strong><br>'+
+    '1. Agrega a contactos: <strong>+34 644 61 98 04</strong><br>'+
+    '2. Envíale por WhatsApp: <em>"I allow callmebot to send me messages"</em><br>'+
+    '3. Te responde con tu API key. Ingrésala abajo.'+
+    '</div>';
+
+  socios.forEach(function(s){
+    var cfg=WA_CFG[s.key]||{phone:'',apikey:'',activo:false};
+    html+='<div style="background:var(--sur);border:1px solid var(--bdr);border-radius:10px;padding:11px 12px;margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+      '<div style="font-size:14px;font-weight:700;">'+s.icon+' '+s.label+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<span style="font-size:12px;color:'+(cfg.activo?'var(--ok)':'var(--inks))+'">';
+      html+=(cfg.activo?'✅ Activo':'⭕ Inactivo')+'</span>'+
+      '<button class="btn-g'+(cfg.activo?' act':'')+'" onclick="waToggle(\''+s.key+'\')" style="font-size:12px;padding:4px 10px;">'+
+      (cfg.activo?'Desactivar':'Activar')+'</button></div></div>'+
+      '<div class="r2">'+
+      '<div class="field"><label class="fl">Número (+51...)</label>'+
+      '<input type="tel" id="wa-ph-'+s.key+'" placeholder="+51987654321" value="'+esc(cfg.phone)+'" style="font-size:13px;">'+
+      '</div>'+
+      '<div class="field"><label class="fl">API Key CallMeBot</label>'+
+      '<input type="text" id="wa-ak-'+s.key+'" placeholder="123456" value="'+esc(cfg.apikey)+'" style="font-size:13px;">'+
+      '</div></div>'+
+      '<div style="display:flex;gap:7px;margin-top:7px;">'+
+      '<button class="btn-g act" onclick="waSaveUser(\''+s.key+'\')" style="font-size:12px;padding:5px 12px;">💾 Guardar</button>'+
+      '<button class="btn-g" onclick="waTest(\''+s.key+'\')" style="font-size:12px;padding:5px 12px;">📲 Probar</button>'+
+      '</div></div>';
+  });
+
+  // Show last sent
+  var last=WA_CFG.last_sent||{};
+  var tipos=[
+    {k:'mes_neg',l:'Mes en negativo'},
+    {k:'stock_crit',l:'Stock crítico'},
+    {k:'vales_old',l:'Vales sin cobrar'},
+    {k:'no_reg',l:'Evento no registrado'}
+  ];
+  var sentItems=tipos.filter(function(t){return last[t.k];});
+  if(sentItems.length){
+    html+='<div style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--bdr);">'+
+      '<div style="font-size:11.5px;font-weight:700;color:var(--inkm);margin-bottom:6px;">Último envío de alertas:</div>'+
+      sentItems.map(function(t){
+        return'<div style="font-size:11.5px;color:var(--inks);">• '+t.l+': '+last[t.k]+'</div>';
+      }).join('')+'</div>';
+  }
+
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+function waSaveUser(key){
+  var ph=(q('wa-ph-'+key)||{}).value||'';
+  var ak=(q('wa-ak-'+key)||{}).value||'';
+  if(!WA_CFG[key])WA_CFG[key]={};
+  WA_CFG[key].phone=ph.trim();
+  WA_CFG[key].apikey=ak.trim();
+  waSave();
+  toast('✅ Guardado — '+key.charAt(0).toUpperCase()+key.slice(1));
+  renderWAPanel();
+}
+
+function waToggle(key){
+  if(!WA_CFG[key])WA_CFG[key]={phone:'',apikey:'',activo:false};
+  var ph=(q('wa-ph-'+key)||{}).value||WA_CFG[key].phone||'';
+  var ak=(q('wa-ak-'+key)||{}).value||WA_CFG[key].apikey||'';
+  if(!WA_CFG[key].activo&&(!ph||!ak)){
+    toast('Ingresa número y API key primero','er');return;
+  }
+  WA_CFG[key].phone=ph;
+  WA_CFG[key].apikey=ak;
+  WA_CFG[key].activo=!WA_CFG[key].activo;
+  waSave();
+  renderWAPanel();
+  toast(WA_CFG[key].activo?'✅ Alertas activadas para '+key:'⭕ Alertas desactivadas para '+key);
+}
+
+function waTest(key){
+  var ph=(q('wa-ph-'+key)||{}).value||'';
+  var ak=(q('wa-ak-'+key)||{}).value||'';
+  if(!ph||!ak){toast('Ingresa número y API key primero','er');return;}
+  var msg='✅ *Sol de Huacariz — Prueba de alerta*\nEl sistema de alertas automáticas está configurado correctamente para este dispositivo.';
+  waSend(ph,ak,msg,function(ok){
+    toast(ok?'✅ Mensaje enviado — revisa WhatsApp':'⚠️ Error al enviar — verifica el número y API key');
+  });
+}
+
+
+// ══ GUARNICIONES ══
+var GUARN=[];
+function loadGuarn(cb){fbGet('guarniciones',function(d){GUARN=Array.isArray(d)?d:[];if(cb)cb();});}
+
+function renderCatGuarn(){
+  var el=q('cat-guarn');if(!el)return;
+  var html='<div class="card" style="margin-bottom:10px;"><div class="sl">Agregar guarnición</div><div class="sb">'+
+    '<div class="r3">'+
+    '<div class="field"><label class="fl">Nombre</label><input type="text" id="gu-nm" placeholder="Papa frita extra, Zarza..."></div>'+
+    '<div class="field"><label class="fl">Precio (S/)</label><div class="pfx"><input type="number" id="gu-pr" min="0" step="0.5" inputmode="decimal" placeholder="0"></div></div>'+
+    '<div class="field"><label class="fl">Categoría</label><input type="text" id="gu-cat" placeholder="Guarnición, Extra..."></div>'+
+    '</div>'+
+    '<button class="btn btn-p" onclick="saveGuarn()">+ Agregar guarnición</button>'+
+    '</div></div>';
+  var cats=[...new Set(GUARN.map(function(g){return g.cat||'Otros';}))];
+  if(!GUARN.length){html+='<div class="info">Sin guarniciones. Agrega la primera arriba.</div>';el.innerHTML=html;return;}
+  cats.forEach(function(cat){
+    html+='<div class="card" style="margin-bottom:9px;"><div class="cath">'+esc(cat)+'</div><div style="padding:0;">';
+    GUARN.filter(function(g){return(g.cat||'Otros')===cat;}).forEach(function(g){
+      html+='<div class="crow"><div class="ci">'+
+        '<div class="cn2">'+esc(g.nm)+'</div>'+
+        '<div class="cs">'+S(nv(g.pr))+(g.on?'':' · <em>archivado</em>')+'</div>'+
+        '</div><div class="ca">'+
+        '<button class="btn-g" onclick="editGuarnOpts(\''+g.id+'\')" style="font-size:11px;padding:4px 8px;">Opciones</button>'+
+        '<button class="btn-g" onclick="togGuarn(\''+g.id+'\')" style="font-size:11px;padding:4px 8px;">'+(g.on?'Archivar':'Activar')+'</button>'+
+        '<button class="btn-g del" onclick="delGuarn(\''+g.id+'\')" style="font-size:11px;padding:4px 8px;">✕</button>'+
+        '</div></div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+function saveGuarn(){
+  var nm=(q('gu-nm').value||'').trim();
+  var pr=nv(q('gu-pr').value);
+  var cat=(q('gu-cat').value||'Guarnición').trim();
+  if(!nm){toast('Ingresa el nombre','er');return;}
+  GUARN.push({id:uid(),nm:nm,pr:pr,cat:cat,on:true,opciones:[]});
+  fbSet('guarniciones',GUARN);
+  q('gu-nm').value='';q('gu-pr').value='';q('gu-cat').value='';
+  renderCatGuarn();toast('✅ '+nm+' agregada');
+}
+function togGuarn(id){var g=GUARN.find(function(x){return x.id===id;});if(g){g.on=!g.on;fbSet('guarniciones',GUARN);renderCatGuarn();}}
+function delGuarn(id){if(!confirm('¿Eliminar?'))return;GUARN=GUARN.filter(function(x){return x.id!==id;});fbSet('guarniciones',GUARN);renderCatGuarn();}
+
+// ══ OPCIONES POR ÍTEM ══
+var OPTS_TARGET={list:'platos',id:null,nm:''};
+var UNITS=['kg','g','litro','ml','unidad','porción','docena','lata','botella','vaso','cuarto','media unidad'];
+
+function editItemOpts(listKey,id){
+  var lists={platos:PLATOS,bar:BAR,guarniciones:GUARN};
+  var item=(lists[listKey]||[]).find(function(x){return x.id===id;});
+  if(!item)return;
+  OPTS_TARGET={list:listKey,id:id,nm:item.nm};
+  renderOptsModal(item);
+  var modal=q('opts-modal');if(modal)modal.className='ov sh';
+}
+
+function renderOptsModal(item){
+  var el=q('opts-modal-body');if(!el)return;
+  var html='<div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px;">📋 Opciones para: <em>'+esc(item.nm)+'</em></div>';
+  html+='<p style="font-size:12px;color:var(--inks);margin-bottom:10px;">Define los grupos de opciones que verá el mozo. Ej: "Guarnición" con opciones "Papa frita, Papa sancochada, Sin papa".</p>';
+  (item.opciones||[]).forEach(function(og,i){
+    html+='<div style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid var(--bdr);">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">'+
+      '<div style="font-size:13px;font-weight:700;color:var(--inkm);">Grupo '+( i+1)+': '+esc(og.g)+'</div>'+
+      '<button class="btn-g del" onclick="delOptGroup('+i+')" style="font-size:11px;padding:3px 8px;">Eliminar grupo</button></div>'+
+      '<div style="font-size:11px;color:var(--inks);margin-bottom:6px;">Opciones: '+esc((og.items||[]).join(' · '))+'</div>'+
+      '<div style="display:flex;gap:6px;align-items:center;">'+
+      '<label style="font-size:11px;color:var(--inks);white-space:nowrap;"><input type="checkbox" '+(og.req?'checked':'')+' onchange="togOptReq('+i+',this.checked)"> Obligatorio</label>'+
+      '</div></div>';
+  });
+  html+='<div style="background:#F0FDF4;border-radius:10px;padding:12px;border:1.5px dashed var(--ok);">'+
+    '<div style="font-size:12px;font-weight:700;color:var(--ok);margin-bottom:8px;">+ Agregar grupo de opciones</div>'+
+    '<div class="r2">'+
+    '<div class="field"><label class="fl">Nombre del grupo</label><input type="text" id="og-nombre" placeholder="Ej: Guarnición, Temperatura, Término..."></div>'+
+    '<div class="field"><label class="fl"><input type="checkbox" id="og-req"> Obligatorio</label></div>'+
+    '</div>'+
+    '<div class="field"><label class="fl">Opciones (separadas por coma)</label>'+
+    '<input type="text" id="og-items" placeholder="Ej: Papa frita, Papa sancochada, Sin papa"></div>'+
+    '<button class="btn btn-p" onclick="addOptGroup()" style="margin-top:8px;">+ Agregar grupo</button>'+
+    '</div>';
+  el.innerHTML=html;
+}
+
+function addOptGroup(){
+  var nm=(q('og-nombre').value||'').trim();
+  var itemsStr=(q('og-items').value||'').trim();
+  var req=q('og-req').checked;
+  if(!nm||!itemsStr){toast('Completa nombre y opciones','er');return;}
+  var items=itemsStr.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var lists={platos:PLATOS,bar:BAR,guarniciones:GUARN};
+  var item=(lists[OPTS_TARGET.list]||[]).find(function(x){return x.id===OPTS_TARGET.id;});
+  if(!item)return;
+  if(!item.opciones)item.opciones=[];
+  item.opciones.push({g:nm,req:req,multi:false,items:items});
+  fbSet(OPTS_TARGET.list,lists[OPTS_TARGET.list]);
+  q('og-nombre').value='';q('og-items').value='';q('og-req').checked=false;
+  renderOptsModal(item);
+  toast('✅ Grupo "'+nm+'" agregado');
+}
+
+function delOptGroup(i){
+  var lists={platos:PLATOS,bar:BAR,guarniciones:GUARN};
+  var item=(lists[OPTS_TARGET.list]||[]).find(function(x){return x.id===OPTS_TARGET.id;});
+  if(!item||!item.opciones)return;
+  item.opciones.splice(i,1);
+  fbSet(OPTS_TARGET.list,lists[OPTS_TARGET.list]);
+  renderOptsModal(item);
+  toast('Grupo eliminado');
+}
+
+function togOptReq(i,val){
+  var lists={platos:PLATOS,bar:BAR,guarniciones:GUARN};
+  var item=(lists[OPTS_TARGET.list]||[]).find(function(x){return x.id===OPTS_TARGET.id;});
+  if(!item||!item.opciones||!item.opciones[i])return;
+  item.opciones[i].req=val;
+  fbSet(OPTS_TARGET.list,lists[OPTS_TARGET.list]);
+}
+
+function closeOptsModal(){var m=q('opts-modal');if(m)m.className='ov';}
+
+// Alias for platos and bar
+function editPlatoOpts(id){editItemOpts('platos',id);}
+function editBarOpts(id){editItemOpts('bar',id);}
+function editGuarnOpts(id){editItemOpts('guarniciones',id);}
+
+// ══ ANULACIONES LOG ══
+function renderAnulaciones(){
+  var el=q('anulaciones-list');if(!el)return;
+  fbGet('anulaciones',function(data){
+    if(!data||!Object.keys(data).length){
+      el.innerHTML='<div style="font-size:13px;color:var(--inks);text-align:center;padding:16px;">Sin anulaciones registradas.</div>';
+      return;
+    }
+    var arr=Object.keys(data).map(function(k){return data[k];}).filter(Boolean);
+    arr.sort(function(a,b){return(b.timestamp||0)-(a.timestamp||0);});
+    el.innerHTML=arr.slice(0,30).map(function(a){
+      return'<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:.5px solid var(--bdr);">'+
+        '<div><div style="font-size:13.5px;font-weight:600;">'+esc(a.item)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--inks);">Mesa '+esc(a.mesa||'?')+' · '+esc(a.mesero||'?')+' · '+esc(a.hora||'')+'</div>'+
+        '<div style="font-size:11.5px;color:var(--wa);font-style:italic;">Motivo: '+esc(a.motivo||'?')+'</div></div>'+
+        '<div style="font-size:12px;font-weight:700;color:var(--inks);flex-shrink:0;margin-left:8px;">'+esc(a.fecha||'')+'</div></div>';
+    }).join('');
+  });
 }
 
 </script>

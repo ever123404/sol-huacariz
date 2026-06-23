@@ -61,8 +61,8 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit;}
 .modal-btns{display:flex;gap:8px;margin-top:12px;}
 .btn-confirm{flex:1;height:48px;background:var(--c1);color:#fff;border-radius:var(--r);font-size:14px;font-weight:800;}
 .btn-cancel{height:48px;padding:0 16px;border:1.5px solid var(--bdr);border-radius:var(--r);color:var(--inks);font-size:13px;font-weight:600;}
-.pay-method{display:flex;gap:8px;margin-bottom:12px;}
-.pm-btn{flex:1;height:38px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12.5px;font-weight:600;color:var(--inks);}
+.pay-method{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.pm-btn{height:36px;padding:0 10px;border:1.5px solid var(--bdr);border-radius:8px;font-size:11.5px;font-weight:600;color:var(--inks);white-space:nowrap;}
 .pm-btn.on{background:var(--c1);color:#fff;border-color:var(--c1);}
 </style>
 <link rel="manifest" href="./manifest-caja.json">
@@ -117,8 +117,12 @@ button{cursor:pointer;border:none;background:none;font:inherit;color:inherit;}
       <div style="font-size:12.5px;font-weight:600;color:var(--inks);margin-bottom:6px;">Método de pago:</div>
       <div class="pay-method">
         <button class="pm-btn on" id="pm-efectivo" onclick="selPago('efectivo')">💵 Efectivo</button>
-        <button class="pm-btn" id="pm-yape" onclick="selPago('yape')">📱 Yape/Plin</button>
-        <button class="pm-btn" id="pm-otro" onclick="selPago('otro')">💳 Otro</button>
+        <button class="pm-btn" id="pm-yape" onclick="selPago('yape')">📱 Yape</button>
+        <button class="pm-btn" id="pm-plin" onclick="selPago('plin')">📲 Plin</button>
+        <button class="pm-btn" id="pm-tc" onclick="selPago('tc')">💳 T. Crédito</button>
+        <button class="pm-btn" id="pm-td" onclick="selPago('td')">💳 T. Débito</button>
+        <button class="pm-btn" id="pm-transf" onclick="selPago('transf')">🏦 Transfer.</button>
+        <button class="pm-btn" id="pm-otro" onclick="selPago('otro')">• Otro</button>
       </div>
       <div class="modal-btns">
         <button class="btn-confirm" onclick="confirmarCobro()">✅ Confirmar cobro</button>
@@ -251,7 +255,7 @@ function abrirCobro(mesa,m){
   q('modal-cobro').className='modal sh';
 }
 
-function selPago(m){pagoMethod=m;['efectivo','yape','otro'].forEach(function(x){q('pm-'+x).className='pm-btn'+(x===m?' on':'');});}
+function selPago(m){pagoMethod=m;['efectivo','yape','plin','tc','td','transf','otro'].forEach(function(x){var el=q('pm-'+x);if(el)el.className='pm-btn'+(x===m?' on':'');});}
 
 function confirmarCobro(){
   if(!mesaActual)return;
@@ -280,7 +284,7 @@ function renderCierre(data){
       totalCobrado+=sub;
     }
   });
-  var byMetodo={efectivo:0,yape:0,otro:0};
+  var byMetodo={efectivo:0,yape:0,plin:0,tc:0,td:0,transf:0,otro:0};
   cobradasMesas.forEach(function(m){byMetodo[m.metodo||'efectivo']+=m.total;});
   if(!cobradasMesas.length){el.innerHTML='<div class="empty"><div class="empty-ico">📊</div><h3>Sin cobros en el turno</h3><p>Los cobros realizados aparecerán aquí.</p></div>';return;}
   el.innerHTML='<div class="resumen-card">'+

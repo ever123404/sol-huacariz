@@ -1418,6 +1418,210 @@ function delMozo(i){
   MESEROS.splice(i,1);fbSet('meseros',MESEROS);renderMozos();
 }
 
+// ══ MÓDULO ALERTAS WHATSAPP (CallMeBot) ══
+// sdh/alertas_config en Firebase
+var WA_CFG = {};
+
+function waLoadCfg(cb){
+  fbGet('alertas_config',function(d){
+    WA_CFG=d&&typeof d==='object'?d:{};
+    if(cb)cb();
+  });
+}
+
+function waSave(){
+  fbSet('alertas_config',WA_CFG);
+}
+
+function waSend(phone,apikey,msg,cb){
+  if(!phone||!apikey)return;
+  var url='https://api.callmebot.com/whatsapp.php?phone='+
+    encodeURIComponent(phone)+'&text='+encodeURIComponent(msg)+'&apikey='+apikey;
+  fetch(url).then(function(r){if(cb)cb(r.ok);}).catch(function(){if(cb)cb(false);});
+}
+
+function waSendAll(msg,key){
+  // Send to all active socios
+  var socios=['ever','jorge','carlos'];
+  var sent=0;
+  socios.forEach(function(s){
+    var cfg=WA_CFG[s];
+    if(!cfg||!cfg.phone||!cfg.apikey||!cfg.activo)return;
+    waSend(cfg.phone,cfg.apikey,msg);sent++;
+  });
+  // Mark as sent today in Firebase
+  if(sent>0){
+    if(!WA_CFG.last_sent)WA_CFG.last_sent={};
+    WA_CFG.last_sent[key]=today();
+    waSave();
+  }
+  return sent;
+}
+
+function waAlreadySent(key){
+  return WA_CFG.last_sent&&WA_CFG.last_sent[key]===today();
+}
+
+function waCheck(rm,tot,real,fij,stockArr,valesArr){
+  if(!WA_CFG||!Object.keys(WA_CFG).length)return;
+
+  // ── ALERTA 1: Mes en negativo ──
+  if(real<0&&fij>0&&!waAlreadySent('mes_neg')){
+    var msg='🚨 *Sol de Huacariz — Mes en negativo*\n'+
+      'Pérdida actual: S/ '+Math.abs(real).toFixed(2)+'\n'+
+      'Operativo: S/ '+tot.res.toFixed(2)+'\n'+
+      'Gastos fijos: S/ '+fij.toFixed(2)+'\n'+
+      '→ Acción requerida antes del próximo evento.';
+    waSendAll(msg,'mes_neg');
+  }
+
+  // ── ALERTA 2: Stock crítico (productos con receta en cero) ──
+  if(!waAlreadySent('stock_crit')){
+    var criticos=(stockArr||STOCK).filter(function(s){
+      return nv(s.qty)===0&&nv(s.min)>0;
+    });
+    if(criticos.length>0){
+      var msg2='📦 *Sol de Huacariz — Stock crítico*\n'+
+        criticos.slice(0,6).map(function(s){return '• '+s.nm+': 0 '+s.u;}).join('\n')+
+        (criticos.length>6?'\n• ... y '+(criticos.length-6)+' más':'')+
+        '\n→ Comprar antes del próximo evento.';
+      waSendAll(msg2,'stock_crit');
+    }
+  }
+
+  // ── ALERTA 3: Vales sin cobrar +14 días ──
+  if(!waAlreadySent('vales_old')){
+    var viejos=(valesArr||VALES).filter(function(v){
+      if(v.st==='cob')return false;
+      var dias=Math.floor((new Date()-new Date(v.fecha||today()))/(1000*60*60*24));
+      return dias>14;
+    });
+    if(viejos.length>0){
+      var total=viejos.reduce(function(s,v){return s+nv(v.monto);},0);
+      var msg3='📄 *Sol de Huacariz — Vales sin cobrar (+14 días)*\n'+
+        viejos.slice(0,5).map(function(v){
+          var dias2=Math.floor((new Date()-new Date(v.fecha||today()))/(1000*60*60*24));
+          return '• '+v.nombre+': S/ '+nv(v.monto).toFixed(2)+' ('+dias2+' días)';
+        }).join('\n')+
+        '\nTotal: S/ '+total.toFixed(2)+
+        '\n→ Cobrar antes del próximo evento.';
+      waSendAll(msg3,'vales_old');
+    }
+  }
+
+  // ── ALERTA 4: Evento del día no registrado (después de las 8pm) ──
+  var hora=new Date().getHours();
+  var diaSemana=new Date().getDay(); // 0=dom, 5=vie, 6=sab
+  var esDiaEvento=(diaSemana===0||diaSemana===5||diaSemana===6);
+  var hayEvento=(rm||REG).some(function(r){return(r.fecha||'')===today();});
+  if(esDiaEvento&&hora>=20&&!hayEvento&&!waAlreadySent('no_reg')){
+    var msg4='📋 *Sol de Huacariz — Evento de hoy sin registrar*\n'+
+      'Son las '+hora+':'+String(new Date().getMinutes()).padStart(2,'0')+' y no se ha registrado el evento de hoy.\n'+
+      '→ El administrador o un socio debe ingresar las ventas del día.';
+    waSendAll(msg4,'no_reg');
+  }
+}
+
+// ── UI: CONFIGURAR ALERTAS ──
+function renderWAPanel(){
+  var el=q('wa-panel');if(!el)return;
+  var socios=[
+    {key:'ever',  label:'Ever',   icon:'🟢'},
+    {key:'jorge', label:'Jorge',  icon:'🔵'},
+    {key:'carlos',label:'Carlos', icon:'🟡'},
+  ];
+  var html='<div class="card" style="margin-bottom:10px;">'+
+    '<div class="ch"><div class="ch-t fnt">🔔 Alertas WhatsApp</div>'+
+    '<div class="ch-s">Envío automático cuando hay alertas críticas.</div></div>'+
+    '<div class="cb">';
+
+  html+='<div style="background:var(--bg);border-radius:9px;padding:10px;margin-bottom:12px;font-size:12.5px;color:var(--inkm);">'+
+    '<strong>Configuración inicial (1 vez por persona):</strong><br>'+
+    '1. Agrega a contactos: <strong>+34 644 61 98 04</strong><br>'+
+    '2. Envíale por WhatsApp: <em>"I allow callmebot to send me messages"</em><br>'+
+    '3. Te responde con tu API key. Ingrésala abajo.'+
+    '</div>';
+
+  socios.forEach(function(s){
+    var cfg=WA_CFG[s.key]||{phone:'',apikey:'',activo:false};
+    html+='<div style="background:var(--sur);border:1px solid var(--bdr);border-radius:10px;padding:11px 12px;margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+      '<div style="font-size:14px;font-weight:700;">'+s.icon+' '+s.label+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<span style="font-size:12px;color:'+(cfg.activo?'var(--ok)':'var(--inks))+'">';
+      html+=(cfg.activo?'✅ Activo':'⭕ Inactivo')+'</span>'+
+      '<button class="btn-g'+(cfg.activo?' act':'')+'" onclick="waToggle(\''+s.key+'\')" style="font-size:12px;padding:4px 10px;">'+
+      (cfg.activo?'Desactivar':'Activar')+'</button></div></div>'+
+      '<div class="r2">'+
+      '<div class="field"><label class="fl">Número (+51...)</label>'+
+      '<input type="tel" id="wa-ph-'+s.key+'" placeholder="+51987654321" value="'+esc(cfg.phone)+'" style="font-size:13px;">'+
+      '</div>'+
+      '<div class="field"><label class="fl">API Key CallMeBot</label>'+
+      '<input type="text" id="wa-ak-'+s.key+'" placeholder="123456" value="'+esc(cfg.apikey)+'" style="font-size:13px;">'+
+      '</div></div>'+
+      '<div style="display:flex;gap:7px;margin-top:7px;">'+
+      '<button class="btn-g act" onclick="waSaveUser(\''+s.key+'\')" style="font-size:12px;padding:5px 12px;">💾 Guardar</button>'+
+      '<button class="btn-g" onclick="waTest(\''+s.key+'\')" style="font-size:12px;padding:5px 12px;">📲 Probar</button>'+
+      '</div></div>';
+  });
+
+  // Show last sent
+  var last=WA_CFG.last_sent||{};
+  var tipos=[
+    {k:'mes_neg',l:'Mes en negativo'},
+    {k:'stock_crit',l:'Stock crítico'},
+    {k:'vales_old',l:'Vales sin cobrar'},
+    {k:'no_reg',l:'Evento no registrado'}
+  ];
+  var sentItems=tipos.filter(function(t){return last[t.k];});
+  if(sentItems.length){
+    html+='<div style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--bdr);">'+
+      '<div style="font-size:11.5px;font-weight:700;color:var(--inkm);margin-bottom:6px;">Último envío de alertas:</div>'+
+      sentItems.map(function(t){
+        return'<div style="font-size:11.5px;color:var(--inks);">• '+t.l+': '+last[t.k]+'</div>';
+      }).join('')+'</div>';
+  }
+
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+function waSaveUser(key){
+  var ph=(q('wa-ph-'+key)||{}).value||'';
+  var ak=(q('wa-ak-'+key)||{}).value||'';
+  if(!WA_CFG[key])WA_CFG[key]={};
+  WA_CFG[key].phone=ph.trim();
+  WA_CFG[key].apikey=ak.trim();
+  waSave();
+  toast('✅ Guardado — '+key.charAt(0).toUpperCase()+key.slice(1));
+  renderWAPanel();
+}
+
+function waToggle(key){
+  if(!WA_CFG[key])WA_CFG[key]={phone:'',apikey:'',activo:false};
+  var ph=(q('wa-ph-'+key)||{}).value||WA_CFG[key].phone||'';
+  var ak=(q('wa-ak-'+key)||{}).value||WA_CFG[key].apikey||'';
+  if(!WA_CFG[key].activo&&(!ph||!ak)){
+    toast('Ingresa número y API key primero','er');return;
+  }
+  WA_CFG[key].phone=ph;
+  WA_CFG[key].apikey=ak;
+  WA_CFG[key].activo=!WA_CFG[key].activo;
+  waSave();
+  renderWAPanel();
+  toast(WA_CFG[key].activo?'✅ Alertas activadas para '+key:'⭕ Alertas desactivadas para '+key);
+}
+
+function waTest(key){
+  var ph=(q('wa-ph-'+key)||{}).value||'';
+  var ak=(q('wa-ak-'+key)||{}).value||'';
+  if(!ph||!ak){toast('Ingresa número y API key primero','er');return;}
+  var msg='✅ *Sol de Huacariz — Prueba de alerta*\nEl sistema de alertas automáticas está configurado correctamente para este dispositivo.';
+  waSend(ph,ak,msg,function(ok){
+    toast(ok?'✅ Mensaje enviado — revisa WhatsApp':'⚠️ Error al enviar — verifica el número y API key');
+  });
+}
+
 </script>
 
 <script>
