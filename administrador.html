@@ -1552,7 +1552,7 @@ function renderWAPanel(){
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
       '<div style="font-size:14px;font-weight:700;">'+s.icon+' '+s.label+'</div>'+
       '<div style="display:flex;align-items:center;gap:8px;">'+
-      '<span style="font-size:12px;color:'+(cfg.activo?'var(--ok)':'var(--inks))+'">';
+      '<span style="font-size:12px;color:'+(cfg.activo?'var(--ok)':'var(--inks)')+'">';
       html+=(cfg.activo?'✅ Activo':'⭕ Inactivo')+'</span>'+
       '<button class="btn-g'+(cfg.activo?' act':'')+'" onclick="waToggle(\''+s.key+'\')" style="font-size:12px;padding:4px 10px;">'+
       (cfg.activo?'Desactivar':'Activar')+'</button></div></div>'+
