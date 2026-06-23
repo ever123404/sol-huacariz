@@ -350,10 +350,19 @@ hr{border:none;border-top:.5px solid var(--bdr);margin:11px 0;}
         <button class="btn-g act" id="ctab-platos" onclick="renderCat('platos')" style="white-space:nowrap;">🍖 Platos</button>
         <button class="btn-g" id="ctab-bar" onclick="renderCat('bar')" style="white-space:nowrap;">🍺 Bar</button>
         <button class="btn-g" id="ctab-stock" onclick="renderCat('stock')" style="white-space:nowrap;">📦 Stock</button>
+        <button class="btn-g" id="ctab-personal" onclick="renderCat('personal')" style="white-space:nowrap;">👥 Personal</button>
+        <button class="btn-g" id="ctab-guarniciones" onclick="renderCat('guarniciones')" style="white-space:nowrap;">🍽 Guarniciones</button>
+        <button class="btn-g" id="ctab-anulaciones" onclick="renderCat('anulaciones')" style="white-space:nowrap;">⚠️ Anulaciones</button>
       </div>
       <div id="cat-platos"></div>
       <div id="cat-bar" style="display:none;"></div>
       <div id="cat-stock" style="display:none;"><div id="cat-stock-list"></div></div>
+      <div id="cat-personal" style="display:none;"></div>
+      <div id="cat-guarniciones" style="display:none;"></div>
+      <div id="cat-anulaciones" style="display:none;">
+        <div class="card"><div class="ch"><div class="ch-t">⚠️ Anulaciones del día</div></div>
+        <div class="cb"><div id="anulaciones-list"></div></div></div>
+      </div>
     </div>
 
   </div>
@@ -893,11 +902,20 @@ function delFijo(id){if(!confirm('¿Eliminar?'))return;FIJOS=FIJOS.filter(functi
 // CATÁLOGO — GESTIÓN DINÁMICA COMPLETA
 // ══════════════════════════════════════════
 function renderCat(tab){
-  ['platos','bar','stock'].forEach(function(t){
+  ['platos','bar','stock','personal','guarniciones','anulaciones'].forEach(function(t){
+    var e=q('cat-'+t);if(e)e.style.display=t===tab?'block':'none';
+    var b=q('ctab-'+t);if(b)b.className='btn-g'+(t===tab?' act':'');
+  });
+  // placeholder - will be overridden below
     var e=q('cat-'+t);if(e)e.style.display=(t===tab||t===tab.replace('cat-',''))?'block':'none';
     var b=q('ctab-'+t);if(b)b.className='btn-g'+(t===tab?'  act':'');
   });
   if(tab==='platos')renderCatPlatos();
+  if(tab==='bar')renderCatBar();
+  if(tab==='stock')renderCatStock();
+  if(tab==='personal')renderCatPersonal();
+  if(tab==='guarniciones')renderCatGuarn();
+  if(tab==='anulaciones')renderAnulaciones();
   else if(tab==='bar')renderCatBar();
   else renderCatStock();
 }
@@ -1283,7 +1301,11 @@ function renderMesRO(){
 
 // ══ CATÁLOGO READ-ONLY ══
 function renderCatRO(tab){
-  ['platos','bar','stock'].forEach(function(t){
+  ['platos','bar','stock','personal','guarniciones','anulaciones'].forEach(function(t){
+    var e=q('cat-'+t);if(e)e.style.display=t===tab?'block':'none';
+    var b=q('ctab-'+t);if(b)b.className='btn-g'+(t===tab?' act':'');
+  });
+  // placeholder - will be overridden below
     var e=q('cro-'+t); if(e)e.style.display=t===tab?'block':'none';
     var b=q('crob-'+t); if(b)b.className='btn-g'+(t===tab?' act':'');
   });
