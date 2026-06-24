@@ -768,6 +768,58 @@ function renderInsights(rm,tot,real,fij,vPend,totLm,mes){
 // ══════════════════════════════════════════
 // HISTORIAL
 // ══════════════════════════════════════════
+
+// ══ PERSONAL — GESTIÓN COMPLETA ══
+function renderCatPersonal(){
+  var el=q('cat-personal');if(!el)return;
+  var html='';
+  html+='<div class="card" style="margin-bottom:10px;border:2px solid var(--c1);">'+
+    '<div class="sl">👨‍🍽️ Mozos del evento</div><div class="sb">'+
+    '<p style="font-size:12.5px;color:var(--inks);margin-bottom:10px;">Solo los mozos activos aparecen en el app de mozos.</p>'+
+    '<div id="mozos-panel"><div style="color:var(--inks);font-size:13px;">Cargando...</div></div>'+
+    '<div style="margin-top:12px;border-top:.5px solid var(--bdr);padding-top:12px;">'+
+    '<div style="font-size:12px;font-weight:600;color:var(--inkm);margin-bottom:8px;">Agregar nuevo mozo:</div>'+
+    '<div class="r3">'+
+    '<div class="field"><label class="fl">Nombre</label><input type="text" id="mz-nm" placeholder="Juan Quispe"></div>'+
+    '<div class="field"><label class="fl">PIN (4 dígitos)</label><input type="text" id="mz-pin" maxlength="4" inputmode="numeric" placeholder="1234"></div>'+
+    '<div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-p" onclick="saveMozo()" style="height:40px;font-size:13px;">+ Agregar</button></div>'+
+    '</div></div></div></div>';
+  var tipos=['fijo-mensual','por-evento','por-hora','contrato'];
+  var labels={'fijo-mensual':'Sueldo fijo mensual','por-evento':'Pago por evento','por-hora':'Pago por hora','contrato':'Contrato único'};
+  tipos.forEach(function(tipo){
+    var arr=PERSONAL.filter(function(p){return p.tipo===tipo;});
+    if(!arr.length)return;
+    html+='<div class="card" style="margin-bottom:9px;"><div class="cath">'+labels[tipo]+'</div><div style="padding:0;">';
+    arr.forEach(function(p){
+      html+='<div class="prow"><div class="pi"><div class="pn">'+esc(p.nombre||'')+'</div>'+
+        '<div class="pr">'+esc(p.rol||'')+' · '+S(nv(p.monto))+'</div></div>'+
+        '<div class="ca">'+
+        '<button class="btn-g" onclick="togPersonal(\''+p.id+'\')" style="font-size:11px;padding:4px 8px;">'+(p.activo?'Dar baja':'Activar')+'</button>'+
+        '<button class="btn-g del" onclick="delPersonal(\''+p.id+'\')" style="font-size:11px;padding:4px 8px;">✕</button>'+
+        '</div></div>';
+    });
+    html+='</div></div>';
+  });
+  if(!PERSONAL.length)html+='<div class="info">Sin personal registrado aún.</div>';
+  html+='<div class="card"><div class="sl">Registrar persona</div><div class="sb">'+
+    '<div class="r2">'+
+    '<div class="field"><label class="fl">Nombre</label><input type="text" id="pe-nm" placeholder="María López"></div>'+
+    '<div class="field"><label class="fl">Rol</label><input type="text" id="pe-rol" placeholder="Cocinera, Mozo..."></div>'+
+    '</div><div class="r2">'+
+    '<div class="field"><label class="fl">Tipo</label><select id="pe-tipo">'+
+    '<option value="fijo-mensual">Fijo mensual</option>'+
+    '<option value="por-evento">Por evento</option>'+
+    '<option value="por-hora">Por hora</option>'+
+    '<option value="contrato">Contrato único</option>'+
+    '</select></div>'+
+    '<div class="field"><label class="fl">Monto S/</label>'+
+    '<div class="pfx"><input type="number" id="pe-monto" min="0" step="1" inputmode="decimal" placeholder="0"></div></div>'+
+    '</div><button class="btn btn-p" onclick="savePersonal()">+ Registrar persona</button>'+
+    '</div></div>';
+  el.innerHTML=html;
+  loadMeseros(function(){renderMozos();});
+}
+
 function renderHist(){
   var el=q('hist-list');if(!el)return;
   if(!REG.length){el.innerHTML='<div class="empty"><div class="empty-ico">📋</div><h3>Sin eventos aún</h3><p>Los eventos registrados aparecerán aquí.</p></div>';return;}
@@ -1797,5 +1849,15 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+
+<div class="ov" id="opts-modal">
+  <div style="background:#fff;border-radius:18px;width:92%;max-width:400px;max-height:85vh;overflow-y:auto;padding:18px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:14px;font-weight:700;color:var(--c1);">Gestión de opciones del ítem</div>
+      <button class="btn-g" onclick="closeOptsModal()" style="font-size:12px;padding:4px 10px;">✕ Cerrar</button>
+    </div>
+    <div id="opts-modal-body"></div>
+  </div>
+</div>
 </body>
 </html>
