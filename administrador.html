@@ -234,7 +234,7 @@ hr{border:none;border-top:.5px solid var(--bdr);margin:11px 0;}
 .pr{font-size:11.5px;color:var(--inks);}
 
 </style>
-<link rel="manifest" href="./manifest.json"><link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="./manifest.json"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="apple-touch-icon" href="./icon-192.png">
 </head>
 <body>
 <div id="app">
@@ -452,7 +452,7 @@ var DS=[
 ];
 
 // STATE
-var REG=[],FIJOS=[],VALES=[],PLATOS=[],BAR=[],STOCK=[];
+var REG=[],FIJOS=[],VALES=[],PLATOS=[],BAR=[],STOCK=[],PERSONAL=[],RECETAS=[];
 var WV={},WS=0;
 
 // UTILS
@@ -523,6 +523,8 @@ function loadData(cb){
   fbGet('platos',function(d){PLATOS=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DP));done.p=1;chk();});
   fbGet('bar',function(d){BAR=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DB));done.b=1;chk();});
   fbGet('stock',function(d){STOCK=Array.isArray(d)&&d.length?d:JSON.parse(JSON.stringify(DS));done.s=1;chk();});
+  fbGet('personal',function(d){PERSONAL=Array.isArray(d)?d:[];});
+  fbGet('recetas',function(d){RECETAS=Array.isArray(d)?d:[];});
 }
 function renderAll(){renderDash();renderHist();renderVales();renderStock();if(ME.isAdmin){renderHoy();loadMeseros(renderMozos);}}
 
@@ -772,6 +774,8 @@ function renderInsights(rm,tot,real,fij,vPend,totLm,mes){
 // ══ PERSONAL — GESTIÓN COMPLETA ══
 function renderCatPersonal(){
   var el=q('cat-personal');if(!el)return;
+  if(typeof PERSONAL==='undefined')window.PERSONAL=[];
+  if(typeof RECETAS==='undefined')window.RECETAS=[];
   var html='';
   html+='<div class="card" style="margin-bottom:10px;border:2px solid var(--c1);">'+
     '<div class="sl">👨‍🍽️ Mozos del evento</div><div class="sb">'+
