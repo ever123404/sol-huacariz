@@ -1,0 +1,25 @@
+{
+  "name": "Sol de Huacariz",
+  "short_name": "Sol HZ",
+  "description": "Sistema de gesti\u00f3n \u2014 Sol de Huacariz Grill & Bar",
+  "start_url": "./ever.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2F6824",
+  "theme_color": "#2F6824",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

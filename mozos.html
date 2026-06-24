@@ -141,19 +141,28 @@ button{cursor:pointer;border:none;background:none;}
 #print-area{display:none;}
 @media print{
   body>*:not(#print-area){display:none!important;}
-  #print-area{display:block!important;font-family:'Courier New',monospace;width:72mm;margin:0 auto;font-size:11px;}
+  #print-area{display:block!important;font-family:'Courier New',monospace;width:72mm;margin:0 auto;font-size:11px;line-height:1.4;}
   .ticket{page-break-after:always;padding:2mm 0;}
   .ticket:last-child{page-break-after:auto;}
-  .t-head{text-align:center;border-bottom:1px dashed #000;padding-bottom:3mm;margin-bottom:3mm;}
-  .t-title{font-size:13px;font-weight:bold;}
-  .t-sub{font-size:10px;}
-  .t-row{display:flex;justify-content:space-between;margin-bottom:1.5mm;}
-  .t-item{font-weight:bold;}
-  .t-opts{font-size:10px;padding-left:5mm;color:#333;}
-  .t-nota{font-size:10px;padding-left:5mm;font-style:italic;}
+  /* Header */
+  .t-head{text-align:center;padding-bottom:2mm;margin-bottom:2mm;}
+  .t-title{font-size:14px;font-weight:bold;letter-spacing:1px;}
+  .t-sub{font-size:9px;color:#555;}
+  .t-seccion{text-align:center;font-size:13px;font-weight:bold;margin:2mm 0;letter-spacing:2px;}
+  /* Info rows */
+  .t-info-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:1mm;}
+  /* Items */
+  .t-item-row{display:flex;align-items:baseline;gap:2mm;margin-bottom:1.5mm;}
+  .t-qty{font-weight:bold;min-width:6mm;flex-shrink:0;}
+  .t-nm{flex:1;font-weight:bold;}
+  .t-pr{min-width:16mm;text-align:right;flex-shrink:0;}
+  .t-opts{font-size:9.5px;padding-left:8mm;color:#333;margin-bottom:1mm;}
+  .t-nota{font-size:9.5px;padding-left:8mm;font-style:italic;margin-bottom:1mm;}
+  .t-cat{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:2mm 0 1mm;}
+  /* Separator */
   .t-sep{border-top:1px dashed #000;margin:2mm 0;}
-  .t-total{font-weight:bold;font-size:13px;}
-  .t-tag{font-size:9px;border:1px solid #000;padding:0 2px;}
+  /* Total */
+  .t-total-row{display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-top:1mm;}
 }
 </style>
 </head>
@@ -382,7 +391,7 @@ function buildItemCard(item,type){
     (agotado?'<span class="stk-tag stk-cero">AGOTADO</span>':
      STOCK_MAP[item.id]<=3?'<span class="stk-tag stk-bajo">Solo '+(STOCK_MAP[item.id]||'?')+'</span>':'')+
     '</div>'+
-    '<div class="item-pr">'+S(nv(item.pr))+'</div>'+
+    /* price hidden for mozos */+
     '</div>'+
     '<div class="counter">'+
     '<button class="cbtn" data-id="'+item.id+'" data-type="'+type+'" onclick="chg(this,-1)">−</button>'+
@@ -557,45 +566,75 @@ function buildComanda(){
 
 // ── PRINT ──
 function buildTicketHTML(comanda){
-  var now=comanda.hora;var mesa=comanda.mesa;var mozo=comanda.mesero;
+  var mesa=comanda.mesa;var mozo=comanda.mesero;var hora=comanda.hora;
+  var fecha=comanda.fecha||'';
   var cocItems=comanda.items.filter(function(i){return i.tipo!=='beb';});
   var barItems=comanda.items.filter(function(i){return i.tipo==='beb';});
-  var total=comanda.items.reduce(function(s,i){return s+(i.cobro==='cob'||!i.cobro?i.pr*i.qty:0);},0);
+  var total=comanda.items.reduce(function(s,i){
+    return s+(i.cobro==='cob'||!i.cobro?nv(i.pr)*nv(i.qty):0);
+  },0);
 
-  function itemRow(item){
-    var optsStr=Object.keys(item.opts).filter(function(k){return item.opts[k];}).map(function(k){return item.opts[k];}).join(', ');
-    var cobroTag=item.cobro==='cor'?'[CORTESÍA]':item.cobro==='val'?'[VALE: '+item.cobroExtra+']':'';
-    return'<div class="t-row"><span class="t-item">'+item.qty+'x '+esc(item.nm)+(cobroTag?'<span class="t-tag">'+cobroTag+'</span>':'')+'</span>'+
-      (item.cobro==='cob'?'<span>'+S(item.pr*item.qty)+'</span>':'<span>—</span>')+'</div>'+
-      (optsStr?'<div class="t-opts">  → '+esc(optsStr)+'</div>':'')+
-      (item.nota?'<div class="t-nota">  📝 '+esc(item.nota)+'</div>':'');
+  function sep(){return '<div class="t-sep"></div>';}
+
+  function itemLineSinPrecio(item){
+    var opts=Object.keys(item.opts||{}).filter(function(k){return item.opts[k];})
+      .map(function(k){return item.opts[k];}).join(' · ');
+    var tag=item.cobro==='cor'?' [CORTESÍA]':item.cobro==='val'?' [VALE]':'';
+    return'<div class="t-item-row">'+
+      '<span class="t-qty">'+item.qty+'x</span>'+
+      '<span class="t-nm">'+esc(item.nm)+tag+'</span>'+
+      '</div>'+
+      (opts?'<div class="t-opts">'+esc(opts)+'</div>':'')+
+      (item.nota?'<div class="t-nota">Nota: '+esc(item.nota)+'</div>':'');
   }
 
-  var header='<div class="t-head"><div class="t-title">SOL DE HUACARIZ</div><div class="t-sub">Grill & Bar · Cajamarca</div></div>'+
-    '<div class="t-row"><span>Mesa:</span><span><b>'+esc(mesa)+'</b></span></div>'+
-    '<div class="t-row"><span>Hora:</span><span>'+now+'</span></div>'+
-    '<div class="t-row"><span>Mozo:</span><span>'+esc(mozo)+'</span></div>';
+  function itemLineConPrecio(item){
+    var opts=Object.keys(item.opts||{}).filter(function(k){return item.opts[k];})
+      .map(function(k){return item.opts[k];}).join(' · ');
+    var subtotal=nv(item.pr)*nv(item.qty);
+    var tag=item.cobro==='cor'?' [CORTESÍA]':item.cobro==='val'?' [VALE: '+esc(item.cobroExtra||'')+']':'';
+    return'<div class="t-item-row">'+
+      '<span class="t-qty">'+item.qty+'x</span>'+
+      '<span class="t-nm">'+esc(item.nm)+tag+'</span>'+
+      '<span class="t-pr">'+(item.cobro==='cob'||!item.cobro?S(subtotal):'—')+'</span>'+
+      '</div>'+
+      (opts?'<div class="t-opts">'+esc(opts)+'</div>':'')+
+      (item.nota?'<div class="t-nota">Nota: '+esc(item.nota)+'</div>':'');
+  }
 
-  // TICKET COCINA
-  var tCocina=cocItems.length?
-    '<div class="ticket">'+header+
-    '<div class="t-row"><b>— COCINA —</b></div><div class="t-sep"></div>'+
-    cocItems.map(itemRow).join('')+
-    '<div class="t-sep"></div></div>':'';
+  function header(seccion){
+    return'<div class="t-head">'+
+      '<div class="t-title">SOL DE HUACARIZ</div>'+
+      '<div class="t-sub">Grill &amp; Bar · Cajamarca</div>'+
+      '</div>'+
+      '<div class="t-seccion">'+seccion+'</div>'+sep()+
+      '<div class="t-info-row"><span>Mesa: <b>'+esc(mesa)+'</b></span><span>'+esc(hora)+'</span></div>'+
+      '<div class="t-info-row"><span>Mozo: '+esc(mozo)+'</span><span>'+esc(fecha)+'</span></div>'+
+      sep();
+  }
 
-  // TICKET BAR
-  var tBar=barItems.length?
-    '<div class="ticket">'+header+
-    '<div class="t-row"><b>— BAR —</b></div><div class="t-sep"></div>'+
-    barItems.map(itemRow).join('')+
-    '<div class="t-sep"></div></div>':'';
+  // TICKET 1: COCINA (solo platos y guarniciones, sin precios)
+  var tCocina='';
+  if(cocItems.length){
+    tCocina='<div class="ticket">'+header('🍖  C O C I N A')+
+      cocItems.map(itemLineSinPrecio).join('')+
+      sep()+'</div>';
+  }
 
-  // TICKET CAJA (completo con precios)
-  var tCaja='<div class="ticket">'+header+
-    '<div class="t-row"><b>— CAJA / CUENTA —</b></div><div class="t-sep"></div>'+
-    comanda.items.map(itemRow).join('')+
-    '<div class="t-sep"></div>'+
-    '<div class="t-row t-total"><span>TOTAL</span><span>'+S(total)+'</span></div>'+
+  // TICKET 2: BAR (solo bebidas, sin precios)
+  var tBar='';
+  if(barItems.length){
+    tBar='<div class="ticket">'+header('🍺  B A R')+
+      barItems.map(itemLineSinPrecio).join('')+
+      sep()+'</div>';
+  }
+
+  // TICKET 3: CAJA (todo con precios y total)
+  var tCaja='<div class="ticket">'+header('💰  C A J A')+
+    (cocItems.length?'<div class="t-cat">PLATOS / GUARNICIONES</div>'+cocItems.map(itemLineConPrecio).join(''):'')+ 
+    (barItems.length?'<div class="t-cat">BEBIDAS</div>'+barItems.map(itemLineConPrecio).join(''):'')+
+    sep()+
+    '<div class="t-total-row"><span>TOTAL</span><span>'+S(total)+'</span></div>'+
     '</div>';
 
   return tCocina+tBar+tCaja;

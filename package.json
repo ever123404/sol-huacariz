@@ -1,0 +1,16 @@
+{
+  "name": "sol-huacariz-print-server",
+  "version": "1.0.0",
+  "description": "Servidor de impresión automática — Sol de Huacariz Grill & Bar",
+  "main": "print-server.js",
+  "scripts": {
+    "start": "node print-server.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.0.0",
+    "node-thermal-printer": "^4.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
