@@ -391,7 +391,6 @@ function buildItemCard(item,type){
     (agotado?'<span class="stk-tag stk-cero">AGOTADO</span>':
      STOCK_MAP[item.id]<=3?'<span class="stk-tag stk-bajo">Solo '+(STOCK_MAP[item.id]||'?')+'</span>':'')+
     '</div>'+
-    /* price hidden for mozos */+
     '</div>'+
     '<div class="counter">'+
     '<button class="cbtn" data-id="'+item.id+'" data-type="'+type+'" onclick="chg(this,-1)">−</button>'+
