@@ -527,13 +527,28 @@ function crearMesa(){
   var cli=(q('nm-cli').value||'').trim();
   if(!num){toast('Ingresa el número de mesa','er');return;}
   hideNuevaMesa();
-  abrirMesa(num,cli);
+  nuevaMesaLimpia(num,cli);
 }
 
 function abrirMesa(num,cliente){
+  // Called for EXISTING mesa — keep current STATE, just navigate
   mesaActual={num:num,cliente:cliente||''};
-  // Reset state
-  [...PLATOS,...GUARN,...BEBS].forEach(function(x){STATE[x.id]={qty:0,opts:{},nota:''};});
+  // Only reset if switching to a different mesa
+  if(!mesaActual||mesaActual.num!==num){
+    [...PLATOS,...GUARN,...BEBS].forEach(function(x){STATE[x.id]={qty:0,opts:{},nota:''};});
+  }
+  q('com-title').textContent='Mesa '+num;
+  q('com-sub').textContent=(cliente?'Cliente: '+cliente+' · ':'')+'Mozo: '+ME;
+  navTo('comanda',null);
+  buildLists();updCnt();
+  switchTab('comida');
+  var ms=q('tab-content');if(ms)ms.scrollTop=0;
+}
+
+function nuevaMesaLimpia(num,cliente){
+  // Called for NEW mesa — always reset STATE
+  mesaActual={num:num,cliente:cliente||''};
+  [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
   q('com-title').textContent='Mesa '+num;
   q('com-sub').textContent=(cliente?'Cliente: '+cliente+' · ':'')+'Mozo: '+ME;
   navTo('comanda',null);
@@ -665,6 +680,9 @@ function updCnt(){
   var el=q('com-cnt');if(el)el.textContent=tot>0?tot+' ítem'+(tot!==1?'s':''):'Sin ítems';
   var tc=q('tc-comida');if(tc){tc.textContent=cc;tc.className='tab-cnt'+(cc>0?'':' z');}
   var tb=q('tc-bebidas');if(tb){tb.textContent=cb;tb.className='tab-cnt'+(cb>0?'':' z');}
+  var bp=q('btn-preview');var bs=q('btn-send');
+  if(bp)bp.style.opacity=tot>0?'1':'0.4';
+  if(bs)bs.style.opacity=tot>0?'1':'0.4';
 }
 
 // SHEET
@@ -730,7 +748,7 @@ function validate(){
 // PREVIEW
 function showPreview(){
   var err=validate();
-  if(err){showErr(err);return;}
+  if(err){toast(err,'er');return;}
   var all=[...PLATOS,...GUARN,...BEBS].filter(function(x){return STATE[x.id]&&STATE[x.id].qty>0;});
   var comida=all.filter(function(x){return BEBS.indexOf(x)<0;});
   var bebs=all.filter(function(x){return BEBS.indexOf(x)>=0;});
@@ -762,7 +780,7 @@ function hidePreview(){q('prev-modal').className='modal';}
 function confirmarEnvio(){hidePreview();enviarComanda();}
 
 function enviarComanda(){
-  var err=validate();if(err){showErr(err);return;}
+  var err=validate();if(err){toast(err,'er');return;}
   q('btn-send').disabled=true;
   var now=new Date();
   var items=[];
@@ -778,6 +796,8 @@ function enviarComanda(){
     estado_bar:items.some(function(i){return i.tipo==='beb';})?'preparando':'na',
     estado_caja:'pendiente',timestamp:Date.now()};
   fbPush('comandas',comanda);
+  // Reset state after sending (ready for next round of same mesa)
+  [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
   // Print
   q('print-area').innerHTML=buildTicket(comanda);
   window.print();
@@ -831,7 +851,6 @@ function buildHist(){
   var el=q('hist-list');if(!el)return;
   if(!historial.length){el.innerHTML='<div style="text-align:center;color:var(--inks);padding:24px;font-size:13px;">Sin comandas en este turno.</div>';return;}
   el.innerHTML=historial.slice(0,20).map(function(c){
-    var tot=c.items.reduce(function(s,i){return s+nv(i.pr)*nv(i.qty);},0);
     var co=c.items.filter(function(i){return i.tipo!=='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
     var ba=c.items.filter(function(i){return i.tipo==='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
     return'<div class="hist-card">'+
@@ -839,7 +858,7 @@ function buildHist(){
       '<span class="hist-hora">'+esc(c.hora)+'</span></div>'+
       (co?'<div class="hist-det">🍖 '+esc(co)+'</div>':'')+
       (ba?'<div class="hist-det">🍺 '+esc(ba)+'</div>':'')+
-      '<div style="font-size:12px;font-weight:700;color:var(--c1);margin-top:3px;">Total: '+S(tot)+'</div>'+
+      /* total hidden in historial */
       '</div>';
   }).join('');
 }
