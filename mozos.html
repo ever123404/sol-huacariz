@@ -10,19 +10,21 @@
 <title>Mozos — Sol de Huacariz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ══ VARIABLES ══ */
 :root{
   --c1:#7C2D12;--c2:#92400E;
-  --libre:#16A34A;--prep:#D97706;--listo:#DC2626;--cerrada:#6B7280;
+  --libre:#16A34A;--prep:#D97706;--listo:#DC2626;
   --bg:#FFF7ED;--sur:#fff;--ink:#1C0A00;--inkm:#431407;--inks:#78350F;
-  --bdr:rgba(124,45,18,.12);--sh:0 2px 8px rgba(0,0,0,.08);--r:12px;
+  --bdr:rgba(124,45,18,.12);--sh:0 2px 8px rgba(0,0,0,.08);
+  /* Category colors */
+  --cat-pollos:#1D4ED8;--cat-especialidad:#15803D;--cat-res:#B45309;
+  --cat-cuy:#7C3AED;--cat-bar:#0891B2;--cat-guarn:#9D174D;--cat-otros:#374151;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);}
 input,select,textarea,button{font:inherit;color:inherit;}
 button{cursor:pointer;border:none;background:none;}
 
-/* ══ LOGIN ══ */
+/* LOGIN */
 #login{position:fixed;inset:0;background:linear-gradient(155deg,#450A00,#7C2D12);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;}
 .lcard{background:#fff;border-radius:20px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);}
 .ltop{background:linear-gradient(135deg,#7C2D12,#92400E);padding:24px;text-align:center;}
@@ -37,116 +39,139 @@ button{cursor:pointer;border:none;background:none;}
 .lerr{font-size:.75rem;font-weight:600;color:#B91C1C;text-align:center;margin-top:7px;min-height:16px;}
 .linfo{font-size:.73rem;color:var(--c1);text-align:center;margin-top:5px;font-weight:600;}
 
-/* ══ APP SHELL ══ */
+/* APP */
 #app{position:fixed;inset:0;flex-direction:column;background:var(--bg);display:none;}
-.hdr{background:linear-gradient(135deg,var(--c1),var(--c2));padding:10px 13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr{background:linear-gradient(135deg,var(--c1),var(--c2));padding:10px 13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .hdr-t{font-size:14px;font-weight:800;color:#fff;}
 .hdr-s{font-size:10px;color:rgba(255,255,255,.65);}
 .chip{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 9px 3px 4px;}
-.av{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.av{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;}
 .chip-nm{font-size:11px;font-weight:700;color:#fff;}
 .btn-salir{background:none;border:1px solid rgba(255,255,255,.3);border-radius:999px;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;padding:3px 9px;}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px;}
 .scroll::-webkit-scrollbar{width:3px;}
 .scroll::-webkit-scrollbar-thumb{background:rgba(124,45,18,.2);border-radius:2px;}
 
-/* ══ PANTALLA MESAS ══ */
+/* MESAS */
 #pg-mesas{padding:12px;}
-.mesas-titulo{font-size:17px;font-weight:700;color:var(--inkm);margin-bottom:4px;}
-.mesas-sub{font-size:12px;color:var(--inks);margin-bottom:14px;}
-.mesas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-.mesa-btn{border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;border:2px solid transparent;transition:all .15s;position:relative;}
-.mesa-btn.libre{background:#F0FDF4;border-color:#16A34A;}
-.mesa-btn.prep{background:#FFFBEB;border-color:#D97706;}
-.mesa-btn.listo{background:#FEF2F2;border-color:#DC2626;animation:pulse-red 1.5s infinite;}
-.mesa-btn.cerrada{background:#F9FAFB;border-color:#D1D5DB;opacity:.6;}
-@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3);}50%{box-shadow:0 0 0 6px rgba(220,38,38,.0);}}
-.mesa-num{font-size:22px;font-weight:900;}
-.mesa-btn.libre .mesa-num{color:var(--libre);}
-.mesa-btn.prep .mesa-num{color:var(--prep);}
-.mesa-btn.listo .mesa-num{color:var(--listo);}
-.mesa-btn.cerrada .mesa-num{color:var(--cerrada);}
-.mesa-est{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
-.mesa-btn.libre .mesa-est{color:var(--libre);}
-.mesa-btn.prep .mesa-est{color:var(--prep);}
-.mesa-btn.listo .mesa-est{color:var(--listo);}
-.mesa-btn.cerrada .mesa-est{color:var(--cerrada);}
-.mesa-count{font-size:10px;color:var(--inks);}
-.leyenda{display:flex;gap:12px;flex-wrap:wrap;padding:10px 0;}
+.sec-title{font-size:17px;font-weight:800;color:var(--inkm);margin-bottom:3px;}
+.sec-sub{font-size:12px;color:var(--inks);margin-bottom:14px;}
+.mesas-list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;}
+.mesa-card{background:var(--sur);border-radius:14px;box-shadow:var(--sh);overflow:hidden;border-left:4px solid #D1D5DB;display:flex;align-items:center;padding:12px 14px;gap:12px;}
+.mesa-card.prep{border-left-color:var(--prep);}
+.mesa-card.listo{border-left-color:var(--listo);animation:pulse-card 1.5s infinite;}
+@keyframes pulse-card{0%,100%{box-shadow:var(--sh);}50%{box-shadow:0 0 0 3px rgba(220,38,38,.2);}}
+.mesa-num-big{font-size:22px;font-weight:900;min-width:44px;text-align:center;}
+.mesa-card.prep .mesa-num-big{color:var(--prep);}
+.mesa-card.listo .mesa-num-big{color:var(--listo);}
+.mesa-info{flex:1;min-width:0;}
+.mesa-nm-cliente{font-size:13.5px;font-weight:700;color:var(--inkm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mesa-detalle{font-size:11.5px;color:var(--inks);margin-top:2px;}
+.mesa-est-badge{font-size:10px;font-weight:800;padding:2px 9px;border-radius:999px;white-space:nowrap;}
+.mesa-card.prep .mesa-est-badge{background:#FEF3C7;color:#92400E;}
+.mesa-card.listo .mesa-est-badge{background:#FEE2E2;color:#B91C1C;}
+.mesa-actions{display:flex;gap:6px;}
+.mesa-btn-add{height:36px;padding:0 12px;background:var(--c1);color:#fff;border-radius:8px;font-size:12px;font-weight:700;}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
 .ley-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--inks);}
 .ley-dot{width:10px;height:10px;border-radius:50%;}
-.btn-nueva-mesa{width:100%;height:52px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border-radius:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.btn-nueva-mesa{width:100%;height:52px;background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border-radius:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(124,45,18,.25);}
+.no-mesas{text-align:center;padding:32px 16px;color:var(--inks);}
+.no-mesas-ico{font-size:40px;margin-bottom:8px;}
 
-/* ══ PANTALLA COMANDA ══ */
-#pg-comanda{display:none;padding:0;}
-.com-hdr{background:var(--sur);border-bottom:1px solid var(--bdr);padding:10px 13px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.com-back{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--c1);}
-.com-info{flex:1;}
-.com-mesa{font-size:16px;font-weight:800;color:var(--inkm);}
-.com-mozo{font-size:11px;color:var(--inks);}
-.com-total{font-size:13px;font-weight:700;color:var(--c1);background:rgba(124,45,18,.08);padding:4px 10px;border-radius:999px;}
+/* COMANDA */
+#pg-comanda{display:none;}
+.com-hdr{background:var(--sur);border-bottom:1px solid var(--bdr);padding:10px 13px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:10;}
+.com-back{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--c1);flex-shrink:0;}
+.com-info{flex:1;min-width:0;}
+.com-mesa-lbl{font-size:16px;font-weight:800;color:var(--inkm);}
+.com-sub{font-size:11px;color:var(--inks);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.com-badge{font-size:12px;font-weight:700;color:var(--c1);background:rgba(124,45,18,.1);padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
 
-/* ══ SECCIÓN ══ */
-.sec-hdr{padding:10px 13px 6px;display:flex;align-items:center;gap:7px;background:var(--bg);position:sticky;top:0;z-index:5;border-bottom:.5px solid var(--bdr);}
-.sec-ico{font-size:16px;}
-.sec-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--c1);}
-.sec-count{background:var(--c1);color:#fff;border-radius:999px;font-size:9px;font-weight:800;padding:1px 7px;}
-.sec-count.empty{background:rgba(124,45,18,.2);color:var(--c1);}
+/* SECTION HEADERS */
+.sec-hdr{padding:10px 13px 7px;background:#F5F0EB;display:flex;align-items:center;gap:7px;border-top:1px solid var(--bdr);}
+.sec-ico{font-size:15px;}
+.sec-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--inkm);}
+.sec-cnt{background:var(--c1);color:#fff;border-radius:999px;font-size:9px;font-weight:800;padding:1px 7px;margin-left:2px;}
+.sec-cnt.z{background:rgba(124,45,18,.15);color:var(--c1);}
 
-/* ══ ITEMS ══ */
-.items-wrap{padding:6px 12px 4px;}
-.cat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--inks);margin:8px 0 4px 2px;}
+/* CATALOG */
+.cat-block{margin:0 12px 4px;}
+.cat-header{display:flex;align-items:center;gap:6px;padding:8px 2px 5px;}
+.cat-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.cat-nm{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;}
 
-.item-row{background:var(--sur);border-radius:var(--r);margin-bottom:7px;overflow:hidden;border:1.5px solid transparent;transition:border-color .15s;}
-.item-row.selected{border-color:var(--c1);}
+/* ITEM ROW */
+.item-row{display:flex;align-items:center;padding:11px 13px;border-bottom:.5px solid var(--bdr);background:var(--sur);gap:10px;}
+.item-row:last-child{border-bottom:none;}
 .item-row.agotado{opacity:.4;pointer-events:none;}
-
-.item-top{display:flex;align-items:center;padding:10px 11px;gap:10px;}
-.item-nm{flex:1;font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;}
-.item-stk{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px;margin-left:4px;}
-.item-stk.bajo{background:#FEF3C7;color:#92400E;}
-.item-stk.cero{background:#FEE2E2;color:#B91C1C;}
-
+.item-row.selected{background:#FFF3E0;}
+.item-left{flex:1;min-width:0;}
+.item-nm{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;}
+.item-nm.selected-nm{color:var(--c1);font-weight:700;}
+.stk-badge{display:inline-block;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px;margin-left:5px;vertical-align:middle;}
+.stk-badge.bajo{background:#FEF3C7;color:#92400E;}
+.stk-badge.cero{background:#FEE2E2;color:#B91C1C;}
+.item-qty-info{font-size:11.5px;font-weight:700;color:var(--c1);margin-top:2px;}
 .counter{display:flex;align-items:center;gap:1px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:999px;padding:2px;flex-shrink:0;}
 .cbtn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--c1);}
 .cbtn:active{background:rgba(124,45,18,.1);}
 .cval{min-width:26px;text-align:center;font-size:14px;font-weight:800;color:var(--ink);}
 .cval.on{color:var(--c1);}
+.item-opts-btn{font-size:11px;font-weight:700;color:var(--c1);background:rgba(124,45,18,.08);border:1px solid rgba(124,45,18,.15);border-radius:999px;padding:3px 9px;margin-left:6px;white-space:nowrap;flex-shrink:0;}
 
-/* ══ OPCIONES ══ */
-.opts-wrap{padding:0 11px 10px;border-top:.5px solid var(--bdr);background:rgba(124,45,18,.02);}
-.opt-grp{margin-top:8px;}
-.opt-grp-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c1);margin-bottom:5px;}
-.opt-grp-lbl .req{color:#DC2626;}
-.opts-chips{display:flex;flex-wrap:wrap;gap:5px;}
-.opt-chip{font-size:12.5px;font-weight:500;padding:5px 12px;border-radius:999px;border:1.5px solid var(--bdr);background:var(--sur);color:var(--inkm);transition:all .12s;}
-.opt-chip.sel{background:var(--c1);color:#fff;border-color:var(--c1);}
-.nota-inp{width:100%;margin-top:7px;min-height:44px;border:1.5px solid var(--bdr);border-radius:9px;padding:7px 10px;font-size:12.5px;background:var(--sur);resize:none;line-height:1.4;}
-.nota-inp::placeholder{color:rgba(124,45,18,.35);}
+/* BOTTOM SHEET */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;}
+.sheet-bg.sh{opacity:1;pointer-events:all;}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:0 0 30px;z-index:51;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:80vh;overflow-y:auto;}
+.sheet.sh{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:12px auto 4px;}
+.sheet-title{font-size:15px;font-weight:800;color:var(--inkm);padding:8px 16px 12px;border-bottom:1px solid var(--bdr);}
+.sheet-body{padding:14px 16px;}
+.og-block{margin-bottom:14px;}
+.og-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--c1);margin-bottom:7px;}
+.og-req{color:#DC2626;}
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip-opt{font-size:13px;font-weight:500;padding:7px 14px;border-radius:999px;border:1.5px solid var(--bdr);background:#F9FAFB;color:var(--inkm);transition:all .12s;}
+.chip-opt.sel{background:var(--c1);color:#fff;border-color:var(--c1);}
+.nota-area{width:100%;min-height:56px;border:1.5px solid var(--bdr);border-radius:10px;padding:9px 12px;font-size:13px;background:#F9FAFB;resize:none;line-height:1.5;margin-top:6px;}
+.nota-area::placeholder{color:#9CA3AF;}
+.sheet-ok{width:100%;height:50px;background:var(--c1);color:#fff;border-radius:12px;font-size:14px;font-weight:800;margin-top:8px;}
 
-/* ══ ENVIAR BTN ══ */
-.enviar-bar{position:sticky;bottom:0;padding:10px 12px;background:rgba(255,247,237,.96);backdrop-filter:blur(8px);border-top:1px solid var(--bdr);}
-.btn-enviar{width:100%;height:54px;background:linear-gradient(135deg,#7C2D12,#B45309);color:#fff;border-radius:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(124,45,18,.3);}
+/* ENVIAR */
+.enviar-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 12px 14px;background:rgba(255,247,237,.96);backdrop-filter:blur(8px);border-top:1px solid var(--bdr);z-index:20;}
+.btn-enviar{width:100%;height:52px;background:linear-gradient(135deg,#7C2D12,#B45309);color:#fff;border-radius:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(124,45,18,.3);}
 .btn-enviar:disabled{background:#D1D5DB;box-shadow:none;}
-
-/* ══ ERR MSG ══ */
-.err-msg{background:#FEE2E2;border:1.5px solid #FECACA;border-radius:9px;padding:9px 11px;color:#B91C1C;font-size:.82rem;font-weight:600;display:none;margin:0 12px 8px;}
+.err-msg{background:#FEE2E2;border:1.5px solid #FECACA;border-radius:9px;padding:9px 12px;color:#B91C1C;font-size:.82rem;font-weight:600;display:none;margin:0 12px 8px;}
 .err-msg.sh{display:block;}
 
-/* ══ OVERLAY OK ══ */
+/* OVERLAY OK */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
 .ov.sh{opacity:1;pointer-events:all;}
 .ov-card{background:#fff;border-radius:20px;padding:28px 20px;width:86%;max-width:300px;text-align:center;}
 .ov-ico{font-size:48px;margin-bottom:8px;}
 .ov-t{font-size:1rem;font-weight:800;color:var(--c1);margin-bottom:4px;}
-.ov-s{font-size:.82rem;color:var(--inks);white-space:pre-line;margin-bottom:16px;}
+.ov-s{font-size:.82rem;color:var(--inks);white-space:pre-line;margin-bottom:16px;line-height:1.5;}
 .ov-btn{background:var(--c1);color:#fff;border-radius:10px;padding:10px 24px;font-size:.9rem;font-weight:700;}
 
-/* ══ TOAST ══ */
+/* TOAST */
 .toast-el{position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:7px 16px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--c1);color:#fff;z-index:999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;}
 .toast-el.sh{opacity:1;}
 
-/* ══ PRINT ══ */
+/* MODAL NUEVA MESA */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;display:none;}
+.modal.sh{display:flex;}
+.modal-card{background:#fff;border-radius:18px;width:100%;max-width:300px;overflow:hidden;}
+.modal-top{background:var(--c1);padding:16px 18px;color:#fff;font-size:14px;font-weight:800;}
+.modal-body{padding:16px 18px;}
+.modal-field{margin-bottom:12px;}
+.modal-field label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--c1);margin-bottom:5px;}
+.modal-field input{width:100%;height:44px;border:1.5px solid var(--bdr);border-radius:9px;padding:0 12px;font-size:15px;font-weight:700;background:var(--bg);}
+.modal-btns{display:flex;gap:8px;margin-top:4px;}
+.modal-ok{flex:1;height:44px;background:var(--c1);color:#fff;border-radius:9px;font-size:14px;font-weight:800;}
+.modal-cancel{height:44px;padding:0 14px;border:1.5px solid var(--bdr);border-radius:9px;color:var(--inks);font-size:13px;}
+
+/* PRINT */
 #print-area{display:none;}
 @media print{
   body>*:not(#print-area){display:none!important;}
@@ -156,7 +181,7 @@ button{cursor:pointer;border:none;background:none;}
   .t-head{text-align:center;margin-bottom:3mm;}
   .t-title{font-size:14px;font-weight:bold;letter-spacing:1px;}
   .t-sub{font-size:9px;}
-  .t-seccion{text-align:center;font-size:13px;font-weight:bold;margin:2mm 0;padding:1mm 0;border-top:1px solid #000;border-bottom:1px solid #000;letter-spacing:2px;}
+  .t-seccion{text-align:center;font-size:13px;font-weight:bold;margin:2mm 0;border-top:1px solid #000;border-bottom:1px solid #000;padding:1mm 0;letter-spacing:2px;}
   .t-info{font-size:10px;margin-bottom:.5mm;}
   .t-sep{border-top:1px dashed #000;margin:2mm 0;}
   .t-item{display:flex;margin-bottom:1.5mm;}
@@ -164,15 +189,14 @@ button{cursor:pointer;border:none;background:none;}
   .t-nm{flex:1;font-weight:bold;}
   .t-pr{min-width:16mm;text-align:right;}
   .t-opts{font-size:9.5px;padding-left:7mm;margin-bottom:.5mm;}
-  .t-nota{font-size:9.5px;padding-left:7mm;font-style:italic;margin-bottom:.5mm;}
-  .t-cat{font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin:2mm 0 1mm;font-weight:bold;}
-  .t-total{display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-top:2mm;padding-top:1mm;border-top:1.5px solid #000;}
+  .t-nota{font-size:9.5px;padding-left:7mm;font-style:italic;}
+  .t-cat{font-size:9px;text-transform:uppercase;font-weight:bold;margin:2mm 0 1mm;}
+  .t-total{display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-top:2mm;border-top:1.5px solid #000;padding-top:1mm;}
 }
 </style>
 </head>
 <body>
 
-<!-- ══ LOGIN ══ -->
 <div id="login">
   <div class="lcard">
     <div class="ltop"><h1>🍽 Sol de Huacariz</h1><p>App de Mozos</p></div>
@@ -188,7 +212,6 @@ button{cursor:pointer;border:none;background:none;}
   </div>
 </div>
 
-<!-- ══ APP ══ -->
 <div id="app">
   <header class="hdr">
     <div><div class="hdr-t">Sol de Huacariz</div><div class="hdr-s" id="h-fecha"></div></div>
@@ -200,75 +223,99 @@ button{cursor:pointer;border:none;background:none;}
 
   <div class="scroll" id="main-scroll">
 
-    <!-- ══ PANTALLA MESAS ══ -->
+    <!-- MESAS -->
     <div id="pg-mesas" style="padding:12px;">
-      <div class="mesas-titulo">Mis mesas</div>
-      <div class="mesas-sub">Toca una mesa para tomar o agregar pedido</div>
-      <div class="mesas-grid" id="mesas-grid"></div>
+      <div class="sec-title">Mis mesas</div>
+      <div class="sec-sub">Mesas activas del turno</div>
       <div class="leyenda">
-        <div class="ley-item"><div class="ley-dot" style="background:var(--libre);"></div>Libre</div>
         <div class="ley-item"><div class="ley-dot" style="background:var(--prep);"></div>En preparación</div>
         <div class="ley-item"><div class="ley-dot" style="background:var(--listo);"></div>Listo para servir</div>
-        <div class="ley-item"><div class="ley-dot" style="background:var(--cerrada);"></div>Cerrada</div>
       </div>
-      <button class="btn-nueva-mesa" onclick="abrirMesaNueva()">
+      <div class="mesas-list" id="mesas-list"></div>
+      <button class="btn-nueva-mesa" onclick="mostrarNuevaMesa()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nueva mesa
       </button>
     </div>
 
-    <!-- ══ PANTALLA COMANDA ══ -->
+    <!-- COMANDA -->
     <div id="pg-comanda" style="display:none;">
       <div class="com-hdr">
         <button class="com-back" onclick="volverMesas()">←</button>
         <div class="com-info">
-          <div class="com-mesa" id="com-mesa-lbl">Mesa —</div>
-          <div class="com-mozo" id="com-mozo-lbl"></div>
+          <div class="com-mesa-lbl" id="com-mesa-lbl">Mesa —</div>
+          <div class="com-sub" id="com-sub"></div>
         </div>
-        <div class="com-total" id="com-total">0 ítems</div>
+        <div class="com-badge" id="com-badge">0 ítems</div>
       </div>
 
-      <!-- PLATOS -->
       <div class="sec-hdr">
-        <span class="sec-ico">🍖</span>
-        <span class="sec-title">Platos</span>
-        <span class="sec-count empty" id="cnt-platos">0</span>
+        <span class="sec-ico">🍖</span><span class="sec-lbl">Platos</span>
+        <span class="sec-cnt z" id="cnt-platos">0</span>
       </div>
-      <div class="items-wrap" id="list-platos"></div>
+      <div id="list-platos"></div>
 
-      <!-- GUARNICIONES -->
       <div class="sec-hdr">
-        <span class="sec-ico">🍽</span>
-        <span class="sec-title">Guarniciones</span>
-        <span class="sec-count empty" id="cnt-guarn">0</span>
+        <span class="sec-ico">🍽</span><span class="sec-lbl">Guarniciones</span>
+        <span class="sec-cnt z" id="cnt-guarn">0</span>
       </div>
-      <div class="items-wrap" id="list-guarn"></div>
+      <div id="list-guarn"></div>
 
-      <!-- BEBIDAS -->
       <div class="sec-hdr">
-        <span class="sec-ico">🍺</span>
-        <span class="sec-title">Bebidas</span>
-        <span class="sec-count empty" id="cnt-bebs">0</span>
+        <span class="sec-ico">🍺</span><span class="sec-lbl">Bebidas</span>
+        <span class="sec-cnt z" id="cnt-bebs">0</span>
       </div>
-      <div class="items-wrap" id="list-bebs"></div>
+      <div id="list-bebs"></div>
 
       <div class="err-msg" id="err-msg"></div>
-      <div class="enviar-bar">
-        <button class="btn-enviar" id="btn-enviar" onclick="enviarComanda()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Enviar comanda
-        </button>
-      </div>
+      <div style="height:70px;"></div>
     </div>
 
-  </div><!-- end scroll -->
-</div><!-- end app -->
+  </div>
+
+  <!-- ENVIAR BAR (only in comanda) -->
+  <div class="enviar-bar" id="enviar-bar" style="display:none;">
+    <button class="btn-enviar" id="btn-enviar" onclick="enviarComanda()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Enviar comanda
+    </button>
+  </div>
+</div>
+
+<!-- MODAL NUEVA MESA -->
+<div class="modal" id="modal-mesa">
+  <div class="modal-card">
+    <div class="modal-top">Nueva mesa</div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Número de mesa</label>
+        <input type="text" id="nm-num" placeholder="Ej: 5" inputmode="numeric" style="font-size:22px;text-align:center;">
+      </div>
+      <div class="modal-field">
+        <label>Nombre del cliente (opcional)</label>
+        <input type="text" id="nm-cliente" placeholder="Ej: Pérez, Juan...">
+      </div>
+      <div class="modal-btns">
+        <button class="modal-ok" onclick="crearMesa()">Abrir mesa →</button>
+        <button class="modal-cancel" onclick="cerrarModalMesa()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM SHEET OPCIONES -->
+<div class="sheet-bg" id="sheet-bg" onclick="cerrarSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-title">Opciones</div>
+  <div class="sheet-body" id="sheet-body"></div>
+</div>
 
 <div class="ov" id="ov-ok">
   <div class="ov-card">
     <div class="ov-ico">✅</div>
     <div class="ov-t">¡Comanda enviada!</div>
-    <div class="ov-s" id="ov-det">Enviada a cocina y bar.</div>
+    <div class="ov-s" id="ov-det"></div>
     <button class="ov-btn" onclick="closeOv()">Volver a mesas</button>
   </div>
 </div>
@@ -281,75 +328,76 @@ var FB='https://sol-huacariz-default-rtdb.firebaseio.com';
 var ME='';
 var PLATOS=[],GUARN=[],BEBS=[];
 var STOCK_MAP={};
-var MESAS_STATE={}; // {num: {estado:'libre'|'prep'|'listo'|'cerrada', items:[]}}
-var STATE={};       // {itemId: {qty, opts, nota}}
+var MESAS={};   // {num: {cliente, estado, comandas[]}}
+var STATE={};   // {itemId: {qty, opts, nota}}
 var mesaActual=null;
+var sheetItemId=null;
 
-// UTILS
+// Category colors
+var CAT_COLORS={
+  'pollos':'#1D4ED8','pollo':'#1D4ED8',
+  'especialidad':'#15803D','especialidades':'#15803D',
+  'res':'#B45309','carnes':'#B45309',
+  'cuy':'#7C3AED',
+  'bar':'#0891B2','bebidas':'#0891B2',
+  'guarnicion':'#9D174D','guarniciones':'#9D174D','extra':'#9D174D',
+  'vegetariano':'#166534','vegetarianos':'#166534',
+  'cortes':'#B45309',
+  'otros':'#374151'
+};
+function catColor(cat){
+  if(!cat)return'#374151';
+  var k=cat.toLowerCase().trim();
+  for(var key in CAT_COLORS){if(k.indexOf(key)>=0)return CAT_COLORS[key];}
+  return'#374151';
+}
+
 var q=function(id){return document.getElementById(id);};
 var nv=function(v){var n=parseFloat(v);return isFinite(n)?n:0;};
 var uid=function(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);};
 var esc=function(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
 var S=function(v){return 'S/ '+(isFinite(v)?v:0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});};
-
 function fbGet(p,cb){fetch(FB+'/sdh/'+p+'.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){cb(d);}).catch(function(){cb(null);});}
 function fbPush(p,d){var k=uid();fetch(FB+'/sdh/'+p+'/'+k+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return k;}
-function fbSet(p,d){fetch(FB+'/sdh/'+p+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});}
+function toast(msg,t){var el=q('toast-el');el.textContent=msg;el.style.background=t==='er'?'#B91C1C':'var(--c1)';el.className='toast-el sh';setTimeout(function(){el.className='toast-el';},2500);}
 
-function toast(msg,type){
-  var el=q('toast-el');el.textContent=msg;
-  el.style.background=type==='er'?'#B91C1C':'var(--c1)';
-  el.className='toast-el sh';
-  setTimeout(function(){el.className='toast-el';},2500);
-}
-
-// ══ LOGIN ══
+// LOGIN
 function loadMeseros(){
   fbGet('meseros',function(d){
     var sel=q('l-sel');
     var arr=Array.isArray(d)?d:Object.keys(d||{}).map(function(k){return d[k];});
-    var activos=arr.filter(function(m){return m&&m.nombre&&m.activo;});
-    if(!activos.length){
-      sel.innerHTML='<option value="">Sin mozos activos</option>';
-      q('l-info').textContent='El administrador debe activar mozos';
-      return;
-    }
+    var act=arr.filter(function(m){return m&&m.nombre&&m.activo;});
+    if(!act.length){sel.innerHTML='<option value="">Sin mozos activos — avisar al admin</option>';return;}
     sel.innerHTML='<option value="">Selecciona tu nombre...</option>';
-    activos.forEach(function(m){
+    act.forEach(function(m){
       var o=document.createElement('option');
-      o.value=m.pin;
-      o.setAttribute('data-nm',m.nombre);
-      o.textContent=m.nombre;
+      o.value=m.pin;o.setAttribute('data-nm',m.nombre);o.textContent=m.nombre;
       sel.appendChild(o);
     });
     sel.disabled=false;
-    q('l-info').textContent=activos.length+' mozos activos en este evento';
+    q('l-info').textContent=act.length+' mozos activos en este evento';
   });
 }
-
 q('l-btn').addEventListener('click',function(){
   var sel=q('l-sel');var pin=q('l-pin').value.trim();
   q('l-err').textContent='';
   if(!sel.value){q('l-err').textContent='Selecciona tu nombre.';return;}
-  if(pin.length!==4){q('l-err').textContent='PIN de 4 dígitos.';return;}
+  if(pin.length!==4){q('l-err').textContent='PIN de 4 dígitos requerido.';return;}
   if(pin!==sel.value){q('l-err').textContent='PIN incorrecto.';q('l-pin').value='';return;}
   ME=sel.options[sel.selectedIndex].getAttribute('data-nm')||sel.options[sel.selectedIndex].textContent;
   startApp();
 });
 q('l-pin').addEventListener('keydown',function(e){if(e.key==='Enter')q('l-btn').click();});
-
 function logout(){ME='';q('app').style.display='none';q('login').style.display='flex';q('l-pin').value='';loadMeseros();}
 
-// ══ START ══
+// START
 function startApp(){
-  q('login').style.display='none';
-  q('app').style.display='flex';
-  q('h-nm').textContent=ME;
-  q('h-av').textContent=ME.charAt(0).toUpperCase();
+  q('login').style.display='none';q('app').style.display='flex';
+  q('h-nm').textContent=ME;q('h-av').textContent=ME.charAt(0).toUpperCase();
   q('h-fecha').textContent=new Date().toLocaleDateString('es-PE',{weekday:'short',day:'numeric',month:'short'});
   loadCatalog();
   loadMesasState();
-  setInterval(loadMesasState,15000); // refresh mesas every 15s
+  setInterval(loadMesasState,12000);
 }
 
 function loadCatalog(){
@@ -362,7 +410,6 @@ function loadCatalog(){
         fbGet('stock',function(st){
           STOCK_MAP={};
           if(Array.isArray(st))st.forEach(function(s){if(s&&s.id)STOCK_MAP[s.id]=nv(s.qty);});
-          // Init state for all items
           [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id&&!STATE[x.id])STATE[x.id]={qty:0,opts:{},nota:''};});
         });
       });
@@ -370,76 +417,84 @@ function loadCatalog(){
   });
 }
 
-// ══ MESAS STATE ══
+// MESAS
 function loadMesasState(){
   fbGet('comandas',function(data){
-    var newState={};
+    var newMesas={};
     if(data){
       Object.keys(data).forEach(function(k){
         var c=data[k];if(!c||!c.mesa)return;
-        var mesa=String(c.mesa);
-        if(!newState[mesa])newState[mesa]={estado:'prep',comandas:[]};
-        newState[mesa].comandas.push(c);
-        // Determine state
-        var allListo=c.estado_cocina==='listo'||c.estado_cocina==='na';
-        var allBarListo=c.estado_bar==='listo'||c.estado_bar==='na';
-        if(c.estado_caja==='cobrado'){newState[mesa].estado='cerrada';}
-        else if(allListo&&allBarListo){newState[mesa].estado='listo';}
-        else{newState[mesa].estado='prep';}
+        var m=String(c.mesa);
+        if(!newMesas[m])newMesas[m]={cliente:c.cliente||'',estado:'prep',comandas:[],hora:c.hora||''};
+        newMesas[m].comandas.push(c);
+        if(c.estado_caja==='cobrado'){newMesas[m].estado='cerrada';}
+        else if((c.estado_cocina==='listo'||c.estado_cocina==='na')&&(c.estado_bar==='listo'||c.estado_bar==='na')){
+          if(newMesas[m].estado!=='cerrada')newMesas[m].estado='listo';
+        }
       });
     }
-    MESAS_STATE=newState;
+    // Remove closed mesas
+    Object.keys(newMesas).forEach(function(m){if(newMesas[m].estado==='cerrada')delete newMesas[m];});
+    MESAS=newMesas;
     renderMesas();
   });
 }
 
 function renderMesas(){
-  var el=q('mesas-grid');if(!el)return;
-  // Show mesas 1-12 plus any active mesas
-  var nums=[];
-  for(var i=1;i<=12;i++)nums.push(String(i));
-  Object.keys(MESAS_STATE).forEach(function(m){if(nums.indexOf(m)<0)nums.push(m);});
-  nums.sort(function(a,b){return parseInt(a)-parseInt(b);});
-
-  el.innerHTML=nums.map(function(num){
-    var ms=MESAS_STATE[num];
-    var estado=ms?ms.estado:'libre';
-    var cnt=ms?ms.comandas.length:0;
-    var labels={libre:'Libre',prep:'En preparación',listo:'¡Listo!',cerrada:'Cerrada'};
-    return'<button class="mesa-btn '+estado+'" onclick="abrirMesa(\''+num+'\')">'+
-      '<div class="mesa-num">'+num+'</div>'+
-      '<div class="mesa-est">'+labels[estado]+'</div>'+
-      (cnt>0?'<div class="mesa-count">'+cnt+' comanda'+(cnt!==1?'s':'')+'</div>':'')+
-      '</button>';
+  var el=q('mesas-list');if(!el)return;
+  var keys=Object.keys(MESAS).sort(function(a,b){return parseInt(a)-parseInt(b);});
+  if(!keys.length){
+    el.innerHTML='<div class="no-mesas"><div class="no-mesas-ico">🪑</div><div style="font-size:14px;font-weight:600;color:var(--inks);">Sin mesas activas</div><div style="font-size:12px;color:var(--inks);margin-top:4px;">Toca "Nueva mesa" para comenzar</div></div>';
+    return;
+  }
+  var labels={prep:'En preparación',listo:'¡Listo para servir!'};
+  el.innerHTML=keys.map(function(num){
+    var m=MESAS[num];
+    var cnt=m.comandas.length;
+    return'<div class="mesa-card '+m.estado+'">'+
+      '<div class="mesa-num-big">'+esc(num)+'</div>'+
+      '<div class="mesa-info">'+
+      '<div class="mesa-nm-cliente">Mesa '+esc(num)+(m.cliente?' · '+esc(m.cliente):'')+'</div>'+
+      '<div class="mesa-detalle">'+cnt+' comanda'+(cnt!==1?'s':'')+' · '+esc(m.hora)+'</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">'+
+      '<span class="mesa-est-badge">'+labels[m.estado]+'</span>'+
+      '<button class="mesa-btn-add" onclick="abrirMesa(\''+esc(num)+'\',\''+esc(m.cliente||'')+'\')">+ Pedido</button>'+
+      '</div></div>';
   }).join('');
 }
 
-function abrirMesaNueva(){
-  var num=prompt('Número de mesa:');
-  if(!num||!num.trim())return;
-  abrirMesa(num.trim());
+function mostrarNuevaMesa(){q('modal-mesa').className='modal sh';q('nm-num').focus();}
+function cerrarModalMesa(){q('modal-mesa').className='modal';q('nm-num').value='';q('nm-cliente').value='';}
+function crearMesa(){
+  var num=(q('nm-num').value||'').trim();
+  var cli=(q('nm-cliente').value||'').trim();
+  if(!num){toast('Ingresa el número de mesa','er');return;}
+  cerrarModalMesa();
+  abrirMesa(num,cli);
 }
 
-function abrirMesa(num){
-  mesaActual=num;
-  // Reset state for this new comanda
+function abrirMesa(num,cliente){
+  mesaActual={num:num,cliente:cliente||''};
   [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
   q('com-mesa-lbl').textContent='Mesa '+num;
-  q('com-mozo-lbl').textContent='Mozo: '+ME;
+  q('com-sub').textContent=(cliente?'Cliente: '+cliente+' · ':'')+'Mozo: '+ME;
   q('pg-mesas').style.display='none';
   q('pg-comanda').style.display='block';
+  q('enviar-bar').style.display='block';
   buildLists();
-  updTotal();
+  updBadge();
   var ms=q('main-scroll');if(ms)ms.scrollTop=0;
 }
 
 function volverMesas(){
   q('pg-comanda').style.display='none';
   q('pg-mesas').style.display='block';
+  q('enviar-bar').style.display='none';
   mesaActual=null;
 }
 
-// ══ BUILD LISTS ══
+// BUILD LISTS
 function buildLists(){
   buildSection('list-platos',PLATOS,'plato');
   buildSection('list-guarn',GUARN,'guarn');
@@ -448,56 +503,61 @@ function buildLists(){
 
 function buildSection(elId,items,type){
   var el=q(elId);if(!el)return;
-  if(!items.length){el.innerHTML='<div style="font-size:12.5px;color:var(--inks);padding:6px 2px 10px;">Sin ítems disponibles.</div>';return;}
+  if(!items.length){el.innerHTML='<div style="font-size:12px;color:var(--inks);padding:8px 13px 10px;">Sin ítems disponibles.</div>';return;}
   var cats=[...new Set(items.map(function(i){return i.cat||'General';}))];
-  var html='';
+  var html='<div style="background:var(--sur);">';
   cats.forEach(function(cat){
     var catItems=items.filter(function(i){return(i.cat||'General')===cat;});
-    if(cats.length>1)html+='<div class="cat-label">'+esc(cat)+'</div>';
+    var col=catColor(cat);
+    if(cats.length>1){
+      html+='<div style="display:flex;align-items:center;gap:7px;padding:8px 13px 5px;background:#F9FAFB;border-top:.5px solid var(--bdr);">'+
+        '<div style="width:10px;height:10px;border-radius:3px;background:'+col+';flex-shrink:0;"></div>'+
+        '<span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:'+col+';">'+esc(cat)+'</span></div>';
+    }
     catItems.forEach(function(item){
       if(!item||!item.id)return;
       if(!STATE[item.id])STATE[item.id]={qty:0,opts:{},nota:''};
-      html+=buildItemCard(item,type);
+      html+=buildItemRow(item,type,col);
     });
   });
+  html+='</div>';
   el.innerHTML=html;
 }
 
-function buildItemCard(item,type){
+function buildItemRow(item,type,col){
   var st=STATE[item.id];
-  var isActive=st&&st.qty>0;
+  var qty=st?st.qty:0;
+  var isActive=qty>0;
   var stockQty=STOCK_MAP[item.id];
-  var agotado=typeof stockQty!=='undefined'&&stockQty===0;
-  var bajo=typeof stockQty!=='undefined'&&stockQty>0&&stockQty<=3;
+  var agotado=typeof stockQty!=='undefined'&&stockQty!==null&&stockQty===0;
+  var bajo=typeof stockQty!=='undefined'&&stockQty!==null&&stockQty>0&&stockQty<=3;
+  var hasOpts=(item.opciones||[]).length>0;
+  var optsLabel=isActive&&hasOpts?buildOptsLabel(item,st):'';
 
   return'<div class="item-row'+(isActive?' selected':'')+(agotado?' agotado':'')+'" id="ir-'+item.id+'">'+
-    '<div class="item-top">'+
-    '<div class="item-nm">'+esc(item.nm)+
-    (agotado?'<span class="item-stk cero">AGOTADO</span>':bajo?'<span class="item-stk bajo">Poco stock</span>':'')+
+    '<div style="width:4px;align-self:stretch;background:'+(isActive?col:'transparent')+';border-radius:2px;flex-shrink:0;margin-right:6px;"></div>'+
+    '<div class="item-left">'+
+    '<div class="item-nm'+(isActive?' selected-nm':'')+'">'+esc(item.nm)+
+    (agotado?'<span class="stk-badge cero">AGOTADO</span>':bajo?'<span class="stk-badge bajo">Solo '+stockQty+'</span>':'')+
     '</div>'+
+    (isActive&&optsLabel?'<div style="font-size:11px;color:var(--c1);margin-top:2px;">'+esc(optsLabel)+'</div>':'')+
+    (isActive&&st.nota?'<div style="font-size:11px;color:var(--inks);margin-top:1px;font-style:italic;">📝 '+esc(st.nota)+'</div>':'')+
+    '</div>'+
+    (isActive&&hasOpts?'<button class="item-opts-btn" data-id="'+item.id+'" data-type="'+type+'" onclick="abrirSheet(this)">⚙ Opciones</button>':'')+
     '<div class="counter">'+
     '<button class="cbtn" data-id="'+item.id+'" data-type="'+type+'" onclick="chg(this,-1)">−</button>'+
-    '<span class="cval'+(isActive?' on':'')+'" id="qv-'+item.id+'">'+(st?st.qty:0)+'</span>'+
+    '<span class="cval'+(isActive?' on':'')+'" id="qv-'+item.id+'">'+qty+'</span>'+
     '<button class="cbtn" data-id="'+item.id+'" data-type="'+type+'" onclick="chg(this,1)">+</button>'+
-    '</div></div>'+
-    (isActive?buildOptsPanel(item):'');
+    '</div></div>';
 }
 
-function buildOptsPanel(item){
-  var st=STATE[item.id];if(!st)return'';
-  var html='<div class="opts-wrap">';
+function buildOptsLabel(item,st){
+  var parts=[];
   (item.opciones||[]).forEach(function(og){
-    html+='<div class="opt-grp"><div class="opt-grp-lbl">'+esc(og.g)+(og.req?'<span class="req"> *</span>':'')+'</div>'+
-      '<div class="opts-chips">';
-    (og.items||[]).forEach(function(opt){
-      var sel=(st.opts||{})[og.g]===opt;
-      html+='<span class="opt-chip'+(sel?' sel':'')+'" data-id="'+item.id+'" data-grp="'+esc(og.g)+'" data-val="'+esc(opt)+'" onclick="selOpt(this)">'+esc(opt)+'</span>';
-    });
-    html+='</div></div>';
+    if(st.opts&&st.opts[og.g])parts.push(st.opts[og.g]);
   });
-  html+='<textarea class="nota-inp" id="nota-'+item.id+'" placeholder="Nota especial (ej: sin ají, sin cebolla...)" oninput="STATE[\''+item.id+'\'].nota=this.value">'+(esc(st.nota||''))+'</textarea>';
-  html+='</div>';
-  return html;
+  if(st.nota)parts.push(st.nota);
+  return parts.length?parts.join(' · '):'';
 }
 
 function chg(btn,d){
@@ -505,106 +565,144 @@ function chg(btn,d){
   var type=btn.getAttribute('data-type');
   if(!STATE[id])STATE[id]={qty:0,opts:{},nota:''};
   STATE[id].qty=Math.max(0,STATE[id].qty+d);
-  var qv=q('qv-'+id);if(qv){qv.textContent=STATE[id].qty;qv.className='cval'+(STATE[id].qty>0?' on':'');}
-  rebuildCard(id,type);
-  updTotal();
-  updSecCount();
+  var qv=q('qv-'+id);
+  if(qv){qv.textContent=STATE[id].qty;qv.className='cval'+(STATE[id].qty>0?' on':'');}
+  var items=type==='plato'?PLATOS:type==='guarn'?GUARN:BEBS;
+  var item=items.find(function(x){return x&&x.id===id;});
+  var col=item?catColor(item.cat||''):'#374151';
+  rebuildRow(id,type,col);
+  updBadge();updSecCount();
 }
 
-function rebuildCard(id,type){
-  var card=q('ir-'+id);if(!card)return;
+function rebuildRow(id,type,col){
+  var row=q('ir-'+id);if(!row)return;
   var items=type==='plato'?PLATOS:type==='guarn'?GUARN:BEBS;
   var item=items.find(function(x){return x&&x.id===id;});
   if(!item)return;
   var tmp=document.createElement('div');
-  tmp.innerHTML=buildItemCard(item,type);
-  if(tmp.firstChild)card.parentNode.replaceChild(tmp.firstChild,card);
+  tmp.innerHTML=buildItemRow(item,type,col);
+  if(tmp.firstChild)row.parentNode.replaceChild(tmp.firstChild,row);
 }
 
-function selOpt(chip){
-  var id=chip.getAttribute('data-id');
+function updBadge(){
+  var total=[...PLATOS,...GUARN,...BEBS].reduce(function(s,x){return s+(x&&x.id&&STATE[x.id]?STATE[x.id].qty:0);},0);
+  var el=q('com-badge');if(el)el.textContent=total>0?total+' ítem'+(total!==1?'s':''):'Sin ítems';
+}
+function updSecCount(){
+  var c={platos:0,guarn:0,bebs:0};
+  PLATOS.forEach(function(x){if(x&&x.id&&STATE[x.id])c.platos+=STATE[x.id].qty;});
+  GUARN.forEach(function(x){if(x&&x.id&&STATE[x.id])c.guarn+=STATE[x.id].qty;});
+  BEBS.forEach(function(x){if(x&&x.id&&STATE[x.id])c.bebs+=STATE[x.id].qty;});
+  ['platos','guarn','bebs'].forEach(function(k){
+    var el=q('cnt-'+k);if(el){el.textContent=c[k];el.className='sec-cnt'+(c[k]>0?'':' z');}
+  });
+}
+
+// BOTTOM SHEET
+function abrirSheet(btn){
+  var id=btn.getAttribute('data-id');
+  var type=btn.getAttribute('data-type');
+  var items=type==='plato'?PLATOS:type==='guarn'?GUARN:BEBS;
+  var item=items.find(function(x){return x&&x.id===id;});
+  if(!item||!(item.opciones||[]).length)return;
+  sheetItemId=id;
+  var st=STATE[id]||{qty:0,opts:{},nota:''};
+  q('sheet-title').textContent=item.nm;
+  var html='';
+  (item.opciones||[]).forEach(function(og){
+    html+='<div class="og-block"><div class="og-lbl">'+esc(og.g)+(og.req?'<span class="og-req"> *</span>':'')+'</div>'+
+      '<div class="chips">';
+    (og.items||[]).forEach(function(opt){
+      var sel=(st.opts||{})[og.g]===opt;
+      html+='<span class="chip-opt'+(sel?' sel':'')+'" data-grp="'+esc(og.g)+'" data-val="'+esc(opt)+'" onclick="selSheetOpt(this)">'+esc(opt)+'</span>';
+    });
+    html+='</div></div>';
+  });
+  html+='<div style="margin-top:10px;"><div class="og-lbl">Nota especial (opcional)</div>'+
+    '<textarea class="nota-area" id="sheet-nota" placeholder="Sin ají, bien cocido, sin cebolla...">'+(esc(st.nota||''))+'</textarea></div>'+
+    '<button class="sheet-ok" onclick="cerrarSheet()">✓ Listo</button>';
+  q('sheet-body').innerHTML=html;
+  q('sheet-bg').className='sheet-bg sh';
+  q('sheet').className='sheet sh';
+}
+
+function selSheetOpt(chip){
   var grp=chip.getAttribute('data-grp');
   var val=chip.getAttribute('data-val');
-  if(!STATE[id])return;
-  STATE[id].opts[grp]=STATE[id].opts[grp]===val?null:val;
-  chip.parentNode.querySelectorAll('.opt-chip').forEach(function(c){
-    c.className='opt-chip'+(c.getAttribute('data-val')===STATE[id].opts[grp]?' sel':'');
+  if(!sheetItemId||!STATE[sheetItemId])return;
+  if(!STATE[sheetItemId].opts)STATE[sheetItemId].opts={};
+  STATE[sheetItemId].opts[grp]=STATE[sheetItemId].opts[grp]===val?null:val;
+  chip.parentNode.querySelectorAll('.chip-opt').forEach(function(c){
+    c.className='chip-opt'+(c.getAttribute('data-val')===STATE[sheetItemId].opts[grp]?' sel':'');
   });
 }
 
-function updTotal(){
-  var total=0;
-  [...PLATOS,...GUARN,...BEBS].forEach(function(x){
-    if(x&&x.id&&STATE[x.id])total+=STATE[x.id].qty;
-  });
-  var el=q('com-total');
-  if(el)el.textContent=total>0?total+' ítem'+(total!==1?'s':''):'Sin ítems';
+function cerrarSheet(){
+  if(sheetItemId){
+    var notaEl=q('sheet-nota');
+    if(notaEl&&STATE[sheetItemId])STATE[sheetItemId].nota=notaEl.value;
+    var type=PLATOS.find(function(x){return x&&x.id===sheetItemId;})?'plato':GUARN.find(function(x){return x&&x.id===sheetItemId;})?'guarn':'beb';
+    var items=type==='plato'?PLATOS:type==='guarn'?GUARN:BEBS;
+    var item=items.find(function(x){return x&&x.id===sheetItemId;});
+    if(item)rebuildRow(sheetItemId,type,catColor(item.cat||''));
+  }
+  q('sheet-bg').className='sheet-bg';
+  q('sheet').className='sheet';
+  sheetItemId=null;
 }
 
-function updSecCount(){
-  var cp=PLATOS.reduce(function(s,p){return s+(STATE[p.id]?STATE[p.id].qty:0);},0);
-  var cg=GUARN.reduce(function(s,g){return s+(STATE[g.id]?STATE[g.id].qty:0);},0);
-  var cb=BEBS.reduce(function(s,b){return s+(STATE[b.id]?STATE[b.id].qty:0);},0);
-  ['platos','guarn','bebs'].forEach(function(k,i){
-    var cnt=[cp,cg,cb][i];var el=q('cnt-'+k);
-    if(el){el.textContent=cnt;el.className='sec-count'+(cnt>0?'':' empty');}
-  });
-}
-
-// ══ VALIDATE ══
+// VALIDATE
 function validate(){
-  var total=[...PLATOS,...GUARN,...BEBS].reduce(function(s,x){return s+(STATE[x.id]?STATE[x.id].qty:0);},0);
+  if(!mesaActual)return'No hay mesa seleccionada.';
+  var total=[...PLATOS,...GUARN,...BEBS].reduce(function(s,x){return s+(x&&x.id&&STATE[x.id]?STATE[x.id].qty:0);},0);
   if(!total)return'Agrega al menos un ítem.';
-  var allItems=[...PLATOS,...GUARN,...BEBS].filter(function(x){return STATE[x.id]&&STATE[x.id].qty>0;});
+  var allItems=[...PLATOS,...GUARN,...BEBS].filter(function(x){return x&&x.id&&STATE[x.id]&&STATE[x.id].qty>0;});
   for(var i=0;i<allItems.length;i++){
     var item=allItems[i];var st=STATE[item.id];
     for(var j=0;j<(item.opciones||[]).length;j++){
       var og=item.opciones[j];
-      if(og.req&&!(st.opts||{})[og.g])return'"'+item.nm+'" requiere: '+og.g;
+      if(og.req&&!(st.opts||{})[og.g])return'"'+item.nm+'" requiere seleccionar: '+og.g+'\n(Toca ⚙ Opciones)';
     }
   }
   return null;
 }
 
-// ══ BUILD TICKET ══
-function buildTicketHTML(comanda){
-  var mesa=comanda.mesa;var mozo=comanda.mesero;var hora=comanda.hora;var fecha=comanda.fecha||'';
-  var cocItems=comanda.items.filter(function(i){return i.tipo!=='beb';});
-  var barItems=comanda.items.filter(function(i){return i.tipo==='beb';});
+// TICKET
+function buildTicket(comanda){
+  var mesa=comanda.mesa;var mozo=comanda.mesero;var hora=comanda.hora;
+  var cliente=comanda.cliente||'';
+  var coc=comanda.items.filter(function(i){return i.tipo!=='beb';});
+  var bar=comanda.items.filter(function(i){return i.tipo==='beb';});
   var total=comanda.items.reduce(function(s,i){return s+nv(i.pr)*nv(i.qty);},0);
-
   function hdr(sec){
     return'<div class="t-head"><div class="t-title">SOL DE HUACARIZ</div><div class="t-sub">Grill &amp; Bar · Cajamarca</div></div>'+
       '<div class="t-seccion">'+sec+'</div>'+
-      '<div class="t-info">Mesa: <b>'+esc(mesa)+'</b> &nbsp;&nbsp; '+esc(hora)+'</div>'+
-      '<div class="t-info">Mozo: '+esc(mozo)+'</div>'+
-      '<div class="t-sep"></div>';
+      '<div class="t-info">Mesa: <b>'+esc(mesa)+'</b>'+(cliente?' · '+esc(cliente):'')+' &nbsp; '+esc(hora)+'</div>'+
+      '<div class="t-info">Mozo: '+esc(mozo)+'</div><div class="t-sep"></div>';
   }
   function rowSP(i){
-    var opts=Object.values(i.opts||{}).filter(Boolean).join(' · ');
+    var o=Object.values(i.opts||{}).filter(Boolean).join(' · ');
     return'<div class="t-item"><span class="t-qty">'+i.qty+'x</span><span class="t-nm">'+esc(i.nm)+'</span></div>'+
-      (opts?'<div class="t-opts">'+esc(opts)+'</div>':'')+
-      (i.nota?'<div class="t-nota">Nota: '+esc(i.nota)+'</div>':'');
+      (o?'<div class="t-opts">'+esc(o)+'</div>':'')+
+      (i.nota?'<div class="t-nota">📝 '+esc(i.nota)+'</div>':'');
   }
   function rowCP(i){
-    var opts=Object.values(i.opts||{}).filter(Boolean).join(' · ');
-    var sub=(nv(i.pr)*nv(i.qty)).toFixed(2);
-    return'<div class="t-item"><span class="t-qty">'+i.qty+'x</span><span class="t-nm">'+esc(i.nm)+'</span><span class="t-pr">S/'+sub+'</span></div>'+
-      (opts?'<div class="t-opts">'+esc(opts)+'</div>':'')+
-      (i.nota?'<div class="t-nota">Nota: '+esc(i.nota)+'</div>':'');
+    var o=Object.values(i.opts||{}).filter(Boolean).join(' · ');
+    return'<div class="t-item"><span class="t-qty">'+i.qty+'x</span><span class="t-nm">'+esc(i.nm)+'</span>'+
+      '<span class="t-pr">S/'+( nv(i.pr)*nv(i.qty)).toFixed(2)+'</span></div>'+
+      (o?'<div class="t-opts">'+esc(o)+'</div>':'')+
+      (i.nota?'<div class="t-nota">📝 '+esc(i.nota)+'</div>':'');
   }
-
-  var t1=cocItems.length?'<div class="ticket">'+hdr('C O C I N A')+cocItems.map(rowSP).join('')+'<div class="t-sep"></div></div>':'';
-  var t2=barItems.length?'<div class="ticket">'+hdr('B A R')+barItems.map(rowSP).join('')+'<div class="t-sep"></div></div>':'';
+  var t1=coc.length?'<div class="ticket">'+hdr('C O C I N A')+coc.map(rowSP).join('')+'<div class="t-sep"></div></div>':'';
+  var t2=bar.length?'<div class="ticket">'+hdr('B A R')+bar.map(rowSP).join('')+'<div class="t-sep"></div></div>':'';
   var t3='<div class="ticket">'+hdr('C A J A')+
-    (cocItems.length?'<div class="t-cat">Platos / Guarniciones</div>'+cocItems.map(rowCP).join(''):'')+
-    (barItems.length?'<div class="t-cat">Bebidas</div>'+barItems.map(rowCP).join(''):'')+
-    '<div class="t-sep"></div><div class="t-total"><span>TOTAL</span><span>S/ '+total.toFixed(2)+'</span></div>'+
-    '</div>';
+    (coc.length?'<div class="t-cat">Platos / Guarniciones</div>'+coc.map(rowCP).join(''):'')+
+    (bar.length?'<div class="t-cat">Bebidas</div>'+bar.map(rowCP).join(''):'')+
+    '<div class="t-sep"></div><div class="t-total"><span>TOTAL</span><span>S/ '+total.toFixed(2)+'</span></div></div>';
   return t1+t2+t3;
 }
 
-// ══ ENVIAR ══
+// ENVIAR
 function enviarComanda(){
   var err=validate();
   if(err){var e=q('err-msg');e.textContent=err;e.className='err-msg sh';setTimeout(function(){e.className='err-msg';},3000);return;}
@@ -612,42 +710,32 @@ function enviarComanda(){
   var now=new Date();
   var items=[];
   [...PLATOS,...GUARN,...BEBS].forEach(function(x){
-    if(!x||!STATE[x.id]||STATE[x.id].qty<=0)return;
+    if(!x||!x.id||!STATE[x.id]||STATE[x.id].qty<=0)return;
     var st=STATE[x.id];
     var tipo=PLATOS.find(function(p){return p.id===x.id;})?'plato':GUARN.find(function(g){return g.id===x.id;})?'guarn':'beb';
-    items.push({id:x.id,nm:x.nm,pr:nv(x.pr),cat:x.cat||'',tipo:tipo,qty:st.qty,opts:Object.assign({},st.opts),nota:st.nota||''});
+    items.push({id:x.id,nm:x.nm,pr:nv(x.pr),cat:x.cat||'',tipo:tipo,qty:st.qty,
+      opts:Object.assign({},st.opts),nota:st.nota||''});
   });
   var comanda={id:uid(),fecha:now.toISOString().slice(0,10),
     hora:now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}),
-    mesa:mesaActual,mesero:ME,items:items,
+    mesa:mesaActual.num,cliente:mesaActual.cliente||'',mesero:ME,items:items,
     estado_cocina:items.some(function(i){return i.tipo!=='beb';})?'pendiente':'na',
     estado_bar:items.some(function(i){return i.tipo==='beb';})?'pendiente':'na',
     estado_caja:'pendiente',timestamp:Date.now()};
-
   fbPush('comandas',comanda);
-
-  // Print
-  q('print-area').innerHTML=buildTicketHTML(comanda);
+  q('print-area').innerHTML=buildTicket(comanda);
   window.print();
-
-  // Show overlay
   var co=items.filter(function(i){return i.tipo!=='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
   var ba=items.filter(function(i){return i.tipo==='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
-  q('ov-det').textContent='Mesa '+mesaActual+(co?'\nCocina: '+co:'')+(ba?'\nBar: '+ba:'');
+  q('ov-det').textContent='Mesa '+comanda.mesa+(comanda.cliente?' · '+comanda.cliente:'')+(co?'\nCocina: '+co:'')+(ba?'\nBar: '+ba:'');
   q('ov-ok').className='ov sh';
   q('btn-enviar').disabled=false;
 }
 
-function closeOv(){
-  q('ov-ok').className='ov';
-  volverMesas();
-  loadMesasState();
-}
+function closeOv(){q('ov-ok').className='ov';volverMesas();loadMesasState();}
 
-// Init
 loadMeseros();
 </script>
-
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js');
