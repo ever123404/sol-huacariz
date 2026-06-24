@@ -271,6 +271,7 @@ button{cursor:pointer;border:none;background:none;}
 
     <!-- COMANDA -->
     <div id="pg-comanda" style="display:none;">
+      <div id="prev-mesa-orders"></div>
       <div class="com-bar">
         <button class="btn-back" onclick="volverMesas()">←</button>
         <div class="com-info">
@@ -531,22 +532,7 @@ function crearMesa(){
 }
 
 function abrirMesa(num,cliente){
-  // Called for EXISTING mesa — keep current STATE, just navigate
-  mesaActual={num:num,cliente:cliente||''};
-  // Only reset if switching to a different mesa
-  if(!mesaActual||mesaActual.num!==num){
-    [...PLATOS,...GUARN,...BEBS].forEach(function(x){STATE[x.id]={qty:0,opts:{},nota:''};});
-  }
-  q('com-title').textContent='Mesa '+num;
-  q('com-sub').textContent=(cliente?'Cliente: '+cliente+' · ':'')+'Mozo: '+ME;
-  navTo('comanda',null);
-  buildLists();updCnt();
-  switchTab('comida');
-  var ms=q('tab-content');if(ms)ms.scrollTop=0;
-}
-
-function nuevaMesaLimpia(num,cliente){
-  // Called for NEW mesa — always reset STATE
+  // Existing mesa — reset STATE for new items, show prev orders
   mesaActual={num:num,cliente:cliente||''};
   [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
   q('com-title').textContent='Mesa '+num;
@@ -554,6 +540,40 @@ function nuevaMesaLimpia(num,cliente){
   navTo('comanda',null);
   buildLists();updCnt();
   switchTab('comida');
+  // Show previous orders for this mesa
+  mostrarPrevMesa(num);
+  var ms=q('tab-content');if(ms)ms.scrollTop=0;
+}
+
+function mostrarPrevMesa(num){
+  var el=q('prev-mesa-orders');if(!el)return;
+  fbGet('comandas',function(data){
+    if(!data){el.innerHTML='';return;}
+    var prev=Object.values(data).filter(function(c){
+      return c&&String(c.mesa)===String(num)&&c.estado_caja!=='cobrado';
+    }).sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
+    if(!prev.length){el.innerHTML='';return;}
+    var html='<div style="background:#FEF3C7;border-radius:10px;padding:10px 12px;margin:8px 12px;">'+
+      '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#92400E;margin-bottom:6px;">📋 Ya pedido en esta mesa</div>';
+    prev.forEach(function(c){
+      var items=c.items.map(function(i){return i.qty+'x '+i.nm;}).join(' · ');
+      html+='<div style="font-size:12px;color:#78350F;padding:3px 0;border-bottom:.5px solid rgba(146,64,14,.15);">'+
+        '<span style="font-weight:700;">'+esc(c.hora)+'</span> '+esc(items)+'</div>';
+    });
+    html+='</div>';
+    el.innerHTML=html;
+  });
+}
+
+function nuevaMesaLimpia(num,cliente){
+  mesaActual={num:num,cliente:cliente||''};
+  [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
+  q('com-title').textContent='Mesa '+num;
+  q('com-sub').textContent=(cliente?'Cliente: '+cliente+' · ':'')+'Mozo: '+ME;
+  navTo('comanda',null);
+  buildLists();updCnt();
+  switchTab('comida');
+  var el=q('prev-mesa-orders');if(el)el.innerHTML='';
   var ms=q('tab-content');if(ms)ms.scrollTop=0;
 }
 
@@ -796,7 +816,7 @@ function enviarComanda(){
     estado_bar:items.some(function(i){return i.tipo==='beb';})?'preparando':'na',
     estado_caja:'pendiente',timestamp:Date.now()};
   fbPush('comandas',comanda);
-  // Reset state after sending (ready for next round of same mesa)
+  // Reset state for next order
   [...PLATOS,...GUARN,...BEBS].forEach(function(x){if(x&&x.id)STATE[x.id]={qty:0,opts:{},nota:''};});
   // Print
   q('print-area').innerHTML=buildTicket(comanda);
@@ -849,19 +869,27 @@ function buildTicket(c){
 // HISTORIAL
 function buildHist(){
   var el=q('hist-list');if(!el)return;
-  if(!historial.length){el.innerHTML='<div style="text-align:center;color:var(--inks);padding:24px;font-size:13px;">Sin comandas en este turno.</div>';return;}
-  el.innerHTML=historial.slice(0,20).map(function(c){
-    var co=c.items.filter(function(i){return i.tipo!=='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
-    var ba=c.items.filter(function(i){return i.tipo==='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
-    return'<div class="hist-card">'+
-      '<div class="hist-top"><span class="hist-mesa">Mesa '+esc(c.mesa)+(c.cliente?' · '+esc(c.cliente):'')+'</span>'+
-      '<span class="hist-hora">'+esc(c.hora)+'</span></div>'+
-      (co?'<div class="hist-det">🍖 '+esc(co)+'</div>':'')+
-      (ba?'<div class="hist-det">🍺 '+esc(ba)+'</div>':'')+
-      /* total hidden in historial */
-      '</div>';
-  }).join('');
+  el.innerHTML='<div style="text-align:center;color:var(--inks);padding:20px;font-size:13px;">Cargando...</div>';
+  var hoy=new Date().toISOString().slice(0,10);
+  fbGet('comandas',function(data){
+    if(!data){el.innerHTML='<div style="text-align:center;color:var(--inks);padding:20px;font-size:13px;">Sin comandas hoy.</div>';return;}
+    var mis=Object.values(data).filter(function(c){
+      return c&&c.mesero===ME&&(c.fecha||'')===(hoy);
+    }).sort(function(a,b){return(b.timestamp||0)-(a.timestamp||0);});
+    if(!mis.length){el.innerHTML='<div style="text-align:center;color:var(--inks);padding:20px;font-size:13px;">Sin comandas enviadas hoy.</div>';return;}
+    el.innerHTML=mis.slice(0,30).map(function(c){
+      var co=(c.items||[]).filter(function(i){return i.tipo!=='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
+      var ba=(c.items||[]).filter(function(i){return i.tipo==='beb';}).map(function(i){return i.qty+'x '+i.nm;}).join(', ');
+      return'<div class="hist-card">'+
+        '<div class="hist-top"><span class="hist-mesa">Mesa '+esc(c.mesa)+(c.cliente?' · '+esc(c.cliente):'')+'</span>'+
+        '<span class="hist-hora">'+esc(c.hora)+'</span></div>'+
+        (co?'<div class="hist-det">🍖 '+esc(co)+'</div>':'')+
+        (ba?'<div class="hist-det">🍺 '+esc(ba)+'</div>':'')+
+        '</div>';
+    }).join('');
+  });
 }
+
 
 // NAV
 function navTo(page,btn){
