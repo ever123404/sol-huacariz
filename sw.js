@@ -1,6 +1,6 @@
 // Sol de Huacariz — Service Worker v5.1
 // Incrementar VERSION para forzar actualización en todos los dispositivos
-var VERSION = 'sdh-v8.7';
+var VERSION = 'sdh-v9.2';
 var ARCHIVOS = [
   './ever.html','./jorge.html','./carlos.html',
   './administrador.html','./mozos.html',
@@ -50,3 +50,5 @@ self.addEventListener('fetch', function(e) {
     })
   );
 });
+
+self.addEventListener('message', function(e){ if(e.data&&e.data.type==='SKIP_WAITING') self.skipWaiting(); });
